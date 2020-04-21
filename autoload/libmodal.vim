@@ -126,14 +126,14 @@ function! libmodal#Enter(modeName, modeFunc)
 			call s:Echo(l:indicator)
 
 			" Accept input
-			let l:modeInput = s:GetChar()
+			let g:libmodalInput = s:GetChar()
 
 			" Break on <Esc>
-			if l:modeInput ==# "\<Esc>"
+			if g:libmodalInput ==# "\<Esc>"
 				break
 			else
 				" Pass input to calling function.
-				call a:modeFunc(l:modeInput)
+				call a:modeFunc()
 			endif
 		catch
 			call s:Beep()

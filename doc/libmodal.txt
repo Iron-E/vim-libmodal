@@ -48,6 +48,13 @@ Arg        Use
 `modeName` The name for the mode when prompting the user.
 `modeFunc` The function used to control the mode. Takes one char param.
 
+                                                               *g:modalInput*
+
+As |libmodal#Enter| accepts input from a user, it updates `g:modalInput`
+with the latest character entered by the user. User functions can
+reference this variable to determine what action to take when a user
+presses a button.
+
 Creating Modes ~
                                            *libmodal-usage-creating-modes*
 
@@ -55,10 +62,10 @@ To define a new mode, you must first create a function to pass into
 |libmodal#Enter|. Example:
 
 >
-	function! s:MyNewMode(modeInput)
-		if a:modeInput ==# "a"
+	function! s:MyNewMode()
+		if g:libmodalInput ==# "a"
 			execute 'tabnew'
-		elsif a:modeInput ==# "d"
+		elsif g:libmodalInput ==# "d"
 			execute 'tabclose'
 		endif
 	endfunction
@@ -68,7 +75,7 @@ After defining said function, you can create a mapping to enter the
 mode. Be sure to use `<expr>`. Example:
 
 >
-	nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode)
+	nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode())
 <
 
 ============================================================================

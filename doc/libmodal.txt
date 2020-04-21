@@ -65,7 +65,7 @@ To define a new mode, you must first create a function to pass into
 	function! s:MyNewMode()
 		if g:libmodalInput ==# "a"
 			execute 'tabnew'
-		elsif g:libmodalInput ==# "d"
+		elseif g:libmodalInput ==# "d"
 			execute 'tabclose'
 		endif
 	endfunction

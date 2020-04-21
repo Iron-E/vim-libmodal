@@ -1,0 +1,87 @@
+*tabmode.txt*          Plugin for managing tabs
+*tabmode*
+
+Forked From: vim-tabmode – https://github.com/dstein64/vim-tabmode
+Original Author: Daniel Steinberg – https://www.dannyadam.com
+
+Author: Iron-E – https://github.com/Iron-E & https://gitlab.com/Iron_E
+Web: https://github.com/Iron-E/vim-tabmode
+
+1. Requirements                            |tabmode-requirements|
+2. Installation                            |tabmode-installation|
+3. Usage                                   |tabmode-usage|
+4. Configuration                           |tabmode-configuration|
+
+|vim-tabmode| is a Vim plugin for managing windows. Built-in functionality includes
+window selection, window buffer swapping, and window resizing. The plugin is
+extensible, allowing additional functionality to be added (see
+|tabmode-configuration| below).
+
+============================================================================
+1. Requirements                            *tabmode-requirements*
+
+* Full functionality
+  - `vim>=8.2` or `nvim>=0.4.0`
+
+============================================================================
+2. Installation                            *tabmode-installation*
+
+Use |packages| or one of the various package managers.
+
+============================================================================
+3. Usage                                   *tabmode-usage*
+                                                               *:TabmodeEnter*
+Enter |vim-tabmode| with <leader><Tab> or |:TabmodeEnter|.
+
+Key         Use
+---         ---
+`<Esc>`     Leave `tabmode`
+`?`         Show help message
+`^`/`0`     Go to the beginning of the tab list.
+`$`         Go to the end of the tab list.
+`b`/`j`/`h` Tab left
+`w`/`k`/`l` Tab right
+`a`         Append a tab and switch to it.
+`A`         Append a tab to the end and switch to it.
+`i`         Prepend a tab and switch to it.
+`I`         Prepend a tab to the beginning and switch to it.
+`d`         Delete the current tab.
+`s`         Replace the current tab with a new tab.
+
+============================================================================
+4. Configuration                           *tabmode-configuration*
+
+By default, |vim-tabmode| is started with <leader><Tab> or |:TabmodeEnter|. These will not be
+clobbered in case they are already used. The |:TabmodeEnter| command takes an optional
+argument specifying how many |vim-tabmode| commands to run (e.g., `:TabmodeEnter 1` would
+exit |vim-tabmode| after the first command). If the optional argument is `0`, which
+is the default, |vim-tabmode| runs until exit.
+>
+	" The following defaults can be customized in your .vimrc
+	map <leader><Tab> <Plug>TabmodeEnter
+	command! TabmodeEnter :call tabmode#Enter()
+<
+
+Color Customization ~
+                                           *tabmode-color-customization*
+The following highlight groups can be configured to change |vim-tabmode|'s colors.
+
+Name              Default      Description
+----              -------      -----------
+`TabmodeActive`   `ModeMsg`    Color for the header row text
+`TabmodeInactive` `Type`       Color for sourcing event names
+`TabmodeNeighbor` `Identifier` Color for other event names
+`TabmodeStar`     `Directory`  Color for the time column
+`TabmodePrompt`   `Special`    Color for the percent column
+
+The highlight groups can be customized in your |.vimrc|, as shown in the
+following example.
+>
+	" Link TabmodeActive highlight to Error highlight
+	highlight link TabmodeActive Error
+	" Specify custom highlighting for TabmodeInactive
+	highlight TabmodeInactive term=bold ctermfg=12 ctermbg=159 guifg=Blue guibg=LightCyan
+<
+
+============================================================================
+ vim:tw=78:ts=4:ft=help:norl:

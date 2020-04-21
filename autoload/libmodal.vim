@@ -27,9 +27,10 @@ endfunction
 " and a corresponding string to echo.
 function! s:Echo(echo_list)
 	mode
-	" for [l:hlgroup, l:string] in a:echo_list
-	" 	execute 'echohl ' .  l:hlgroup | echon l:string
-	" endfor
+	for [l:hlgroup, l:string] in a:echo_list
+		" execute 'echohl ' .  l:hlgroup | echon l:string
+		echo l:string
+	endfor
 	echohl None
 endfunction
 

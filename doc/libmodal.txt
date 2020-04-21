@@ -1,87 +1,85 @@
-*tabmode.txt*          Plugin for managing tabs
-*tabmode*
+*libmodal.txt*          Plugin for managing tabs
+*libmodal*
 
-Forked From: vim-tabmode – https://github.com/dstein64/vim-tabmode
+Forked From: vim-win – https://github.com/dstein64/vim-win
 Original Author: Daniel Steinberg – https://www.dannyadam.com
 
 Author: Iron-E – https://github.com/Iron-E & https://gitlab.com/Iron_E
-Web: https://github.com/Iron-E/vim-tabmode
+Web: https://github.com/Iron-E/vim-libmodal
 
-1. Requirements                            |tabmode-requirements|
-2. Installation                            |tabmode-installation|
-3. Usage                                   |tabmode-usage|
-4. Configuration                           |tabmode-configuration|
+1. Requirements                            |libmodal-requirements|
+2. Installation                            |libmodal-installation|
+3. Usage                                   |libmodal-usage|
+4. Configuration                           |libmodal-configuration|
 
-|vim-tabmode| is a Vim plugin for managing windows. Built-in functionality includes
-window selection, window buffer swapping, and window resizing. The plugin is
-extensible, allowing additional functionality to be added (see
-|tabmode-configuration| below).
-
-============================================================================
-1. Requirements                            *tabmode-requirements*
-
-* Full functionality
-  - `vim>=8.2` or `nvim>=0.4.0`
+|libmodal| is a Neo/vim library/plugin aimed at simplifying the creation
+of new "modes" (e.g. Insert, Normal). The entrance of modes is
+user-defined, and their exit is set to `<Esc>`. The function and name of
+modes is also user-defined, and is outlined in |libmodal-usage|.
 
 ============================================================================
-2. Installation                            *tabmode-installation*
+1. Requirements                            *libmodal-requirements*
+
+* `vim>=8.2` or `nvim>=0.4.0`
+
+============================================================================
+2. Installation                            *libmodal-installation*
 
 Use |packages| or one of the various package managers.
 
-============================================================================
-3. Usage                                   *tabmode-usage*
-                                                               *:TabmodeEnter*
-Enter |vim-tabmode| with <leader><Tab> or |:TabmodeEnter|.
+Package Managers ~
+                                           *libmodal-installation-package-managers*
 
-Key         Use
----         ---
-`<Esc>`     Leave `tabmode`
-`?`         Show help message
-`^`/`0`     Go to the beginning of the tab list.
-`$`         Go to the end of the tab list.
-`b`/`j`/`h` Tab left
-`w`/`k`/`l` Tab right
-`a`         Append a tab and switch to it.
-`A`         Append a tab to the end and switch to it.
-`i`         Prepend a tab and switch to it.
-`I`         Prepend a tab to the beginning and switch to it.
-`d`         Delete the current tab.
-`s`         Replace the current tab with a new tab.
+Manager    Command
+-------    -------
+dein.vim   `call dein#add('https://github.com/Iron_E/vim-libmodal')`
+NeoBundle  `NeoBundle 'https://github.com/Iron_E/vim-libmodal'`
+Vim-Plug   `Plug 'https://github.com/Iron_E/vim-libmodal'`
+Vundle     `Plugin 'https://github.com/Iron_E/vim-libmodal'`
 
 ============================================================================
-4. Configuration                           *tabmode-configuration*
+3. Usage                                   *libmodal-usage*
+                                                               *libmodal#Enter*
 
-By default, |vim-tabmode| is started with <leader><Tab> or |:TabmodeEnter|. These will not be
-clobbered in case they are already used. The |:TabmodeEnter| command takes an optional
-argument specifying how many |vim-tabmode| commands to run (e.g., `:TabmodeEnter 1` would
-exit |vim-tabmode| after the first command). If the optional argument is `0`, which
-is the default, |vim-tabmode| runs until exit.
+|libmodal#Enter| takes two arguments: `modeName` and `modeFunc`.
+
+Arg        Use
+---        ---
+`modeName` The name for the mode when prompting the user.
+`modeFunc` The function used to control the mode. Takes one char param.
+
+Creating Modes ~
+                                           *libmodal-usage-creating-modes*
+
+To define a new mode, you must first create a function to pass into
+|libmodal#Enter|. Example:
+
 >
-	" The following defaults can be customized in your .vimrc
-	map <leader><Tab> <Plug>TabmodeEnter
-	command! TabmodeEnter :call tabmode#Enter()
+	function! s:MyNewMode(modeInput)
+		if a:modeInput ==# "a"
+			execute 'tabnew'
+		elsif a:modeInput ==# "d"
+			execute 'tabclose'
+		endif
+	endfunction
 <
 
-Color Customization ~
-                                           *tabmode-color-customization*
-The following highlight groups can be configured to change |vim-tabmode|'s colors.
+After defining said function, you can create a mapping to enter the
+mode. Be sure to use `<expr>`. Example:
+
+>
+	nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode)
+<
+
+============================================================================
+4. Configuration                           *libmodal-configuration*
+
+The following highlight groups can be configured to change |libmodal|'s colors.
 
 Name              Default      Description
 ----              -------      -----------
-`TabmodeActive`   `ModeMsg`    Color for the header row text
-`TabmodeInactive` `Type`       Color for sourcing event names
-`TabmodeNeighbor` `Identifier` Color for other event names
-`TabmodeStar`     `Directory`  Color for the time column
-`TabmodePrompt`   `Special`    Color for the percent column
-
-The highlight groups can be customized in your |.vimrc|, as shown in the
-following example.
->
-	" Link TabmodeActive highlight to Error highlight
-	highlight link TabmodeActive Error
-	" Specify custom highlighting for TabmodeInactive
-	highlight TabmodeInactive term=bold ctermfg=12 ctermbg=159 guifg=Blue guibg=LightCyan
-<
+`LibmodalPrompt`  `ModeMsg`    Color for the mode text.
+`LibmodalStar`    `StatusLine` Color for the `*` at the beginning.
 
 ============================================================================
  vim:tw=78:ts=4:ft=help:norl:

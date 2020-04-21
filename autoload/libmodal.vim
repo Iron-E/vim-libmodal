@@ -8,19 +8,19 @@ endfunction
 function! s:GetChar()
 	try
 		while 1
-			let l:char = getchar()
+			let l:modeInput = getchar()
 			if v:mouse_win ># 0 | continue | endif
-			if l:char ==# "\<CursorHold>" | continue | endif
+			if l:modeInput ==# "\<CursorHold>" | continue | endif
 			break
 		endwhile
 	catch
 		" E.g., <c-c>
-		let l:char = char2nr("\<esc>")
+		let l:modeInput = char2nr("\<esc>")
 	endtry
-	if type(l:char) ==# v:t_number
-		let l:char = nr2char(l:char)
+	if type(l:modeInput) ==# v:t_number
+		let l:modeInput = nr2char(l:modeInput)
 	endif
-	return l:char
+	return l:modeInput
 endfunction
 
 " Takes a list of lists. Each sublist is comprised of a highlight group name
@@ -83,7 +83,7 @@ endfunction
 
 " Returns a state that can be used for restoration.
 function! s:Init()
-	let l:state = {
+	let l:winState = {
 	\	'winwidth': &winwidth,
 	\	'winheight': &winheight
 	\}
@@ -91,7 +91,7 @@ function! s:Init()
 	" cause window resizing.
 	let &winwidth = max([1, &winminwidth])
 	let &winheight = max([1, &winminheight])
-	return l:state
+	return l:winState
 endfunction
 
 function! s:Restore(state)
@@ -105,13 +105,13 @@ function! libmodal#Enter(modeName, modeFunc)
 	if !s:CheckVersion() | return | endif
 	" Define mode indicator
 	let l:indicator = [
-	\	 ['WinStar', '*'],
+	\	 ['LibmodalStar', '*'],
 	\	 ['None', ' '],
-	\	 ['WinPrompt', a:modeName],
+	\	 ['LibmodalPrompt', a:modeName],
 	\	 ['None', ' >']
 	\]
 	" Initialize the window state for the mode.
-	let l:state = s:Init()
+	let l:winState = s:Init()
 	" Outer loop to keep accepting commands
 	while 1
 		try
@@ -126,14 +126,14 @@ function! libmodal#Enter(modeName, modeFunc)
 			call s:Echo(l:indicator)
 
 			" Accept input
-			let l:char = s:GetChar()
+			let l:modeInput = s:GetChar()
 
 			" Break on <Esc>
-			if l:char ==# "\<Esc>"
+			if l:modeInput ==# "\<Esc>"
 				break
 			else
 				" Pass input to calling function.
-				call a:modeFunc(l:char)
+				call a:modeFunc(l:modeInput)
 			endif
 		catch
 			call s:Beep()
@@ -143,6 +143,6 @@ function! libmodal#Enter(modeName, modeFunc)
 		endtry
 	endwhile
 	" Put the window back to the way it was before the mode enter.
-	call s:Restore(l:state)
+	call s:Restore(l:winState)
 	redraw | echo ''
 endfunction

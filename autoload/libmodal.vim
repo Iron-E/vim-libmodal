@@ -28,8 +28,7 @@ endfunction
 function! s:Echo(echo_list)
 	mode
 	for [l:hlgroup, l:string] in a:echo_list
-		" execute 'echohl ' .  l:hlgroup | echon l:string
-		echohl l:hlgroup | echon l:string
+		execute 'echohl ' . l:hlgroup | echon l:string
 	endfor
 	echohl None
 endfunction
@@ -109,7 +108,7 @@ function! libmodal#Enter(modeName, modeFunc)
 	\	 ['LibmodalStar', '*'],
 	\	 ['None', ' '],
 	\	 ['LibmodalPrompt', a:modeName],
-	\	 ['None', ' >']
+	\	 ['None', ' > ']
 	\]
 	" Initialize the window state for the mode.
 	let l:winState = s:Init()

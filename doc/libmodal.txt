@@ -58,6 +58,9 @@ presses a button.
 Creating Modes ~
                                            *libmodal-usage--creating-modes*
 
+For an example of a plugin that uses `vim-libmodal`, see
+https://github.com/Iron-E/vim-tabmode.
+
 To define a new mode, you must first create a function to pass into
 |libmodal#Enter|. Example:
 

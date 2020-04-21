@@ -24,6 +24,8 @@ Use `packadd` or one of the many package managers:
 
 # Usage
 
+For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://github.com/Iron-E/vim-tabmode).
+
 ## `libmodal#Enter`
 
 `libmodal#Enter` takes two arguments: `modeName` and `modeFunc`.

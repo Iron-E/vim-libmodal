@@ -133,7 +133,7 @@ function! libmodal#Enter(modeName, modeFunc)
 				break
 			else
 				" Pass input to calling function.
-				call a:modeFunc()
+				call funcref(a:modeFunc)
 			endif
 		catch
 			call s:Beep()

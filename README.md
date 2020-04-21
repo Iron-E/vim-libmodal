@@ -1,161 +1,69 @@
 # Description
 
-`vim-tabmode` is a Vim plugin for managing windows. Built-in functionality includes window selection, window buffer swapping, and window resizing. The plugin is extensible, allowing additional functionality to be added (see *Configuration* below).
+__Forked From:__ [vim-win](https://github.com/dstein64/vim-win)
+__Original Author:__ [Daniel Steinberg](https://www.dannyadam.com)
 
-<img src="screenshot.png?raw=true" width="800"/>
+`vim-libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal).
 
-# Requirements
-
-* Full functionality
-	* `vim>=8.2` or `nvim>=0.4.0`
-* Limited functionality (no window labels)
-	* `vim>=8.1.1140`
-
-# Installation
-
-Use one of the following package managers:
-
-* [Vim8 packages][vim8pack]:
-	* `git clone https://github.com/Iron_E/vim-tabmode ~/.vim/pack/plugins/start/vim-win`
-* [Vundle][vundle]:
-	* Add `Plugin 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* `:PluginInstall` or `$ vim +PluginInstall +qall`
-* [Pathogen][pathogen]:
-	* `git clone --depth=1 https://github.com/Iron_E/vim-tabmode ~/.vim/bundle/vim-win`
-* [vim-plug][vimplug]:
-	* Add `Plug 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* `:PlugInstall` or `$ vim +PlugInstall +qall`
-* [dein.vim][dein]:
-	* Add `call dein#add('https://github.com/Iron_E/vim-tabmode')` to `~/.vimrc`
-	* `:call dein#install()`
-* [NeoBundle][neobundle]:
-	* Add `NeoBundle 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* Re-open vim or execute `:source ~/.vimrc`
-
-# Usage
-
-Enter `vim-tabmode` with `<leader><Tab>` or `:TabmodeEnter`.
-
-| Key         | Use                                              |
-|:-----------:|:------------------------------------------------:|
-| `<Esc>`     | Leave `tabmode`                                  |
-| `?`         | Show help message                                |
-| `^`/`0`     | Go to the beginning of the tab list.             |
-| `$`         | Go to the end of the tab list.                   |
-| `b`/`j`/`h` | Tab left                                         |
-| `w`/`k`/`l` | Tab right                                        |
-| `a`         | Append a tab and switch to it.                   |
-| `A`         | Append a tab to the end and switch to it.        |
-| `i`         | Prepend a tab and switch to it.                  |
-| `I`         | Prepend a tab to the beginning and switch to it. |
-| `d`         | Delete the current tab.                          |
-| `s`         | Replace the current tab with a new tab.          |
-
-See `:help win-usage` for additional details.
-
-# Documentation
-
-```vim
-:help vim-tabmode
-```
-
-The underlying markup is in [tabmode.txt](doc/win.txt).
-
-## Demo
-
-<img src="screencast.gif?raw=true" width="735"/>
-
-# License
-
-The source code has an [MIT License](https://en.wikipedia.org/wiki/MIT_License).
-
-See [LICENSE](LICENSE).
-
-[dein]: https://github.com/Shougo/dein.vim
-[neobundle]: https://github.com/Shougo/neobundle.vim
-[pathogen]: https://github.com/tpope/vim-pathogen
-[vim8pack]: http://vimhelp.appspot.com/repeat.txt.html#packages
-[vimplug]: https://github.com/junegunn/vim-plug
-[vundle]: https://github.com/gmarik/vundle
-||||||| parent of b38a46b... Refactor to allow generalized modes
-=======
-# Description
-
-`vim-tabmode` is a Vim plugin for managing windows. Built-in functionality includes window selection, window buffer swapping, and window resizing. The plugin is extensible, allowing additional functionality to be added (see *Configuration* below).
-
-<img src="screenshot.png?raw=true" width="800"/>
+The entrance of modes is user-defined, and their exit is set to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
 
 # Requirements
 
-* Full functionality
-	* `vim>=8.2` or `nvim>=0.4.0`
-* Limited functionality (no window labels)
-	* `vim>=8.1.1140`
+* `vim>=8.2` or `nvim>=0.4.0`
 
 # Installation
 
-Use one of the following package managers:
+Use `packadd` or one of the many package managers:
 
-* [Vim8 packages][vim8pack]:
-	* `git clone https://github.com/Iron_E/vim-tabmode ~/.vim/pack/plugins/start/vim-win`
-* [Vundle][vundle]:
-	* Add `Plugin 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* `:PluginInstall` or `$ vim +PluginInstall +qall`
-* [Pathogen][pathogen]:
-	* `git clone --depth=1 https://github.com/Iron_E/vim-tabmode ~/.vim/bundle/vim-win`
-* [vim-plug][vimplug]:
-	* Add `Plug 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* `:PlugInstall` or `$ vim +PlugInstall +qall`
-* [dein.vim][dein]:
-	* Add `call dein#add('https://github.com/Iron_E/vim-tabmode')` to `~/.vimrc`
-	* `:call dein#install()`
-* [NeoBundle][neobundle]:
-	* Add `NeoBundle 'https://github.com/Iron_E/vim-tabmode'` to `~/.vimrc`
-	* Re-open vim or execute `:source ~/.vimrc`
+| Manager   | Command                                                   |
+|:---------:|:---------------------------------------------------------:|
+| dein.vim  | `call dein#add('https://github.com/Iron_E/vim-libmodal')` |
+| NeoBundle | `NeoBundle 'https://github.com/Iron_E/vim-libmodal'`      |
+| Vim-Plug  | `Plug 'https://github.com/Iron_E/vim-libmodal'`           |
+| Vundle    | `Plugin 'https://github.com/Iron_E/vim-libmodal'`         |
 
 # Usage
 
-Enter `vim-tabmode` with `<leader><Tab>` or `:TabmodeEnter`.
+## `libmodal#Enter`
 
-| Key         | Use                                              |
-|:-----------:|:------------------------------------------------:|
-| `<Esc>`     | Leave `tabmode`                                  |
-| `?`         | Show help message                                |
-| `^`/`0`     | Go to the beginning of the tab list.             |
-| `$`         | Go to the end of the tab list.                   |
-| `b`/`j`/`h` | Tab left                                         |
-| `w`/`k`/`l` | Tab right                                        |
-| `a`         | Append a tab and switch to it.                   |
-| `A`         | Append a tab to the end and switch to it.        |
-| `i`         | Prepend a tab and switch to it.                  |
-| `I`         | Prepend a tab to the beginning and switch to it. |
-| `d`         | Delete the current tab.                          |
-| `s`         | Replace the current tab with a new tab.          |
+`libmodal#Enter` takes two arguments: `modeName` and `modeFunc`.
 
-See `:help win-usage` for additional details.
+| Arg        | Use                                                          |
+|:----------:|:------------------------------------------------------------:|
+| `modeName` | The name for the mode when prompting the user.               |
+| `modeFunc` | The function used to control the mode. Takes one char param. |
 
-# Documentation
+## `g:modalInput`
 
-```vim
-:help vim-tabmode
+As `libmodal#Enter` accepts input from a user, it updates `g:modalInput` with the latest character entered.
+
+Functions may reference this variable to determine what action to take when a user presses a button.
+
+## Creating Modes
+
+To define a new mode, you must first create a function to pass into `libmodal#Enter`. Example:
+
+```viml
+function! s:MyNewMode()
+	if g:libmodalInput ==# "a"
+		execute 'tabnew'
+	elsif g:libmodalInput ==# "d"
+		execute 'tabclose'
+	endif
+endfunction
 ```
 
-The underlying markup is in [tabmode.txt](doc/win.txt).
+After defining said function, you can create a mapping to enter the mode. Be sure to use `<expr>`. Example:
 
-## Demo
+```viml
+nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode())
+```
 
-<img src="screencast.gif?raw=true" width="735"/>
+# Configuration
 
-# License
+The following highlight groups can be configured to change the mode's colors:
 
-The source code has an [MIT License](https://en.wikipedia.org/wiki/MIT_License).
-
-See [LICENSE](LICENSE).
-
-[dein]: https://github.com/Shougo/dein.vim
-[neobundle]: https://github.com/Shougo/neobundle.vim
-[pathogen]: https://github.com/tpope/vim-pathogen
-[vim8pack]: http://vimhelp.appspot.com/repeat.txt.html#packages
-[vimplug]: https://github.com/junegunn/vim-plug
-[vundle]: https://github.com/gmarik/vundle
->>>>>>> b38a46b... Refactor to allow generalized modes
+| Name             | Default      | Description                         |
+|:----------------:|:------------:|:-----------------------------------:|
+| `LibmodalPrompt` | `ModeMsg`    | Color for the mode text.            |
+| `LibmodalStar`   | `StatusLine` | Color for the `*` at the beginning. |

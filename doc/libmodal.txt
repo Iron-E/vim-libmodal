@@ -28,7 +28,7 @@ modes is also user-defined, and is outlined in |libmodal-usage|.
 Use |packages| or one of the various package managers.
 
 Package Managers ~
-                                           *libmodal-installation-package-managers*
+                                           *libmodal-installation--package-managers*
 
 Manager    Command
 -------    -------
@@ -56,7 +56,7 @@ reference this variable to determine what action to take when a user
 presses a button.
 
 Creating Modes ~
-                                           *libmodal-usage-creating-modes*
+                                           *libmodal-usage--creating-modes*
 
 To define a new mode, you must first create a function to pass into
 |libmodal#Enter|. Example:
@@ -81,7 +81,7 @@ mode. Be sure to use `<expr>`. Example:
 ============================================================================
 4. Configuration                           *libmodal-configuration*
 
-The following highlight groups can be configured to change |libmodal|'s colors.
+The following highlight groups can be configured to change a mode's colors:
 
 Name              Default      Description
 ----              -------      -----------

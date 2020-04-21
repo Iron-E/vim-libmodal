@@ -62,7 +62,7 @@ To define a new mode, you must first create a function to pass into
 |libmodal#Enter|. Example:
 
 >
-	function! s:MyNewMode()
+	function! s:NuMode()
 		if g:libmodalInput ==# "a"
 			execute 'tabnew'
 		elseif g:libmodalInput ==# "d"
@@ -75,8 +75,12 @@ After defining said function, you can create a mapping to enter the
 mode. Be sure to use `<expr>`. Example:
 
 >
-	nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode())
+	command! NuModeEnter call libmodal#Enter("NEW", funcref('s:NuMode'))
+	nnoremap <expr> <leader>n NuModeEnter
 <
+
+Note the `funcref()` call. It must be there or else `libmodal#Enter` won't
+execute properly.
 
 ============================================================================
 4. Configuration                           *libmodal-configuration*

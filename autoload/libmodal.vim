@@ -26,7 +26,7 @@ endfunction
 " Takes a list of lists. Each sublist is comprised of a highlight group name
 " and a corresponding string to echo.
 function! s:Echo(echo_list)
-	redraw
+	mode
 	for [l:hlgroup, l:string] in a:echo_list
 		execute 'echohl ' .  l:hlgroup | echon l:string
 	endfor
@@ -144,5 +144,5 @@ function! libmodal#Enter(modeName, modeFunc)
 	endwhile
 	" Put the window back to the way it was before the mode enter.
 	call s:Restore(l:winState)
-	redraw | echo ''
+	mode | echo ''
 endfunction

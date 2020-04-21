@@ -33,9 +33,9 @@ Use `packadd` or one of the many package managers:
 | `modeName` | The name for the mode when prompting the user.               |
 | `modeFunc` | The function used to control the mode. Takes one char param. |
 
-## `g:modalInput`
+## `g:libmodalInput`
 
-As `libmodal#Enter` accepts input from a user, it updates `g:modalInput` with the latest character entered.
+As `libmodal#Enter` accepts input from a user, it updates `g:libmodalInput` with the latest character entered.
 
 Functions may reference this variable to determine what action to take when a user presses a button.
 

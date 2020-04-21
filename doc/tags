@@ -5,6 +5,6 @@ libmodal-installation	/*libmodal-installation*
 libmodal-installation--package-managers		/*libmodal-installation--package-managers*
 libmodal-usage	/*libmodal-usage*
 libmodal#Enter	/*libmodal#Enter*
-g:modalInput	/*g:modalInput*
+g:libmodalInput	/*g:libmodalInput*
 libmodal-usage--creating-modes	/*libmodal-usage--creating-modes*
 libmodal-configuration	/*libmodal-configuration*

@@ -1,7 +1,7 @@
 # Description
 
-__Forked From:__ [vim-win](https://github.com/dstein64/vim-win)
-__Original Author:__ [Daniel Steinberg](https://www.dannyadam.com)
+* __Forked From:__ [vim-win](https://github.com/dstein64/vim-win)
+* __Original Author:__ [Daniel Steinberg](https://www.dannyadam.com)
 
 `vim-libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal).
 
@@ -28,18 +28,22 @@ For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://g
 
 ## `libmodal#Enter`
 
-`libmodal#Enter` takes two arguments: `modeName` and `modeFunc`.
+`libmodal#Enter` takes two arguments: `modeName` and `modeCallback`.
 
-| Arg        | Use                                                          |
-|:----------:|:------------------------------------------------------------:|
-| `modeName` | The name for the mode when prompting the user.               |
-| `modeFunc` | The function used to control the mode. Takes one char param. |
+| Arg            | Use                                                          |
+|:--------------:|:------------------------------------------------------------:|
+| `modeName`     | The name for the mode when prompting the user.               |
+| `modeCallback` | The function used to control the mode. Takes one char param. |
 
-## `g:libmodalInput`
+## Receiving Input
 
-As `libmodal#Enter` accepts input from a user, it updates `g:libmodalInput` with the latest character entered.
+When a user of |libmodal| calls |libmodal#Enter|, the `modeName` parameter is used to generate a __unique global variable__ for the specific purpose of receiving said input. The variable is generated as follows:
 
-Functions may reference this variable to determine what action to take when a user presses a button.
+```viml
+let g:{tolower(a:modeName)}ModeInput = …
+```
+
+For example, if `modeName` is 'FOO', then the variable that is created is `g:fooModeInput`.
 
 ## Creating Modes
 
@@ -58,8 +62,10 @@ endfunction
 After defining said function, you can create a mapping to enter the mode. Be sure to use `<expr>`. Example:
 
 ```viml
-nnoremap <expr> <leader>m libmodal#Enter("MyNewModeName", s:MyNewMode())
+nnoremap <expr> <leader>m libmodal#Enter('MyNewModeName', funcref('s:MyNewMode'))
 ```
+
+__Note the `funcref`__. It is important that it be present, else the call to `libmodal#Enter` will fail.
 
 # Configuration
 

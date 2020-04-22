@@ -101,7 +101,7 @@ endfunction
 
 " Runs the vim-libmodal command prompt loop. The function takes an optional
 " argument specifying how many times to run (runs until exiting by default).
-function! libmodal#Enter(modeName, modeFunc)
+function! libmodal#Enter(modeName, modeCallback)
 	if !s:CheckVersion() | return | endif
 	" Define mode indicator
 	let l:indicator = [
@@ -126,10 +126,10 @@ function! libmodal#Enter(modeName, modeFunc)
 			call s:Echo(l:indicator)
 
 			" Accept input
-			let g:libmodalInput = s:GetChar()
+			let g:{a:modeName}Input = s:GetChar()
 
 			" Break on <Esc>
-			if g:libmodalInput ==# "\<Esc>"
+			if g:{a:modeName}Input ==# "\<Esc>"
 				break
 			else
 				" Pass input to calling function.

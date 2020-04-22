@@ -41,22 +41,29 @@ Vundle     `Plugin 'https://github.com/Iron_E/vim-libmodal'`
 3. Usage                                   *libmodal-usage*
                                                                *libmodal#Enter*
 
-|libmodal#Enter| takes two arguments: `modeName` and `modeFunc`.
+|libmodal#Enter| takes two arguments: `modeName` and `modeCallback`.
 
-Arg        Use
----        ---
-`modeName` The name for the mode when prompting the user.
-`modeFunc` The function used to control the mode. Takes one char param.
+Arg            Use
+---            ---
+`modeName`     The name for the mode when prompting the user.
+`modeCallback` The function used to control the mode. Takes one char param.
 
-                                                               *g:libmodalInput*
+Receiving Input ~
+                                              *libmodal-usage--receiving-input*
 
-As |libmodal#Enter| accepts input from a user, it updates `g:libmodalInput`
-with the latest character entered by the user. User functions can
-reference this variable to determine what action to take when a user
-presses a button.
+When a user of |libmodal| calls |libmodal#Enter|, the `modeName` parameter is
+used to generate a unique global variable for the specific purpose of
+receiving said input. The variable is generated as follows:
+
+>
+	let g:{tolower(a:modeName)}ModeInput = …
+<
+
+For example, if `modeName` is 'FOO`, then the variable that is created is
+`g:fooModeInput`.
 
 Creating Modes ~
-                                           *libmodal-usage--creating-modes*
+                                               *libmodal-usage--creating-modes*
 
 For an example of a plugin that uses `vim-libmodal`, see
 https://github.com/Iron-E/vim-tabmode.
@@ -78,7 +85,7 @@ After defining said function, you can create a mapping to enter the
 mode. Be sure to use `<expr>`. Example:
 
 >
-	command! NuModeEnter call libmodal#Enter("NEW", funcref('s:NuMode'))
+	command! NuModeEnter call libmodal#Enter('NEW', funcref('s:NuMode'))
 	nnoremap <expr> <leader>n NuModeEnter
 <
 

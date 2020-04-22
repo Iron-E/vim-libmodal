@@ -112,6 +112,9 @@ function! libmodal#Enter(modeName, modeCallback)
 	\]
 	" Initialize the window state for the mode.
 	let l:winState = s:Init()
+
+	let l:input = tolower(a:modeName) . "ModeInput"
+
 	" Outer loop to keep accepting commands
 	while 1
 		try
@@ -126,10 +129,10 @@ function! libmodal#Enter(modeName, modeCallback)
 			call s:Echo(l:indicator)
 
 			" Accept input
-			let g:{a:modeName}ModeInput = s:GetChar()
+			let g:{l:input} = s:GetChar()
 
 			" Break on <Esc>
-			if g:{a:modeName}ModeInput ==# "\<Esc>"
+			if g:{l:input} ==# "\<Esc>"
 				break
 			else
 				" Pass input to calling function.

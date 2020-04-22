@@ -73,7 +73,7 @@ To define a new mode, you must first create a function to pass into
 
 >
 	function! s:NuMode()
-		if g:libmodalInput ==# "a"
+		if g:nuModeInput ==# "a"
 			execute 'tabnew'
 		elseif g:libmodalInput ==# "d"
 			execute 'tabclose'

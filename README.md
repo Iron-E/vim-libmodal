@@ -37,7 +37,7 @@ For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://g
 
 ## Receiving Input
 
-When a user of |libmodal| calls |libmodal#Enter|, the `modeName` parameter is used to generate a __unique global variable__ for the specific purpose of receiving said input. The variable is generated as follows:
+When a user of `libmodal` calls `libmodal#Enter`, the `modeName` parameter is used to generate a __unique global variable__ for the specific purpose of receiving said input. The variable is generated as follows:
 
 ```viml
 let g:{tolower(a:modeName)}ModeInput = …
@@ -50,10 +50,10 @@ For example, if `modeName` is 'FOO', then the variable that is created is `g:foo
 To define a new mode, you must first create a function to pass into `libmodal#Enter`. Example:
 
 ```viml
-function! s:MyNewMode()
-	if g:libmodalInput ==# "a"
+function! s:FooMode()
+	if g:fooModeInput ==# "a"
 		execute 'tabnew'
-	elseif g:libmodalInput ==# "d"
+	elseif g:fooModeInput ==# "d"
 		execute 'tabclose'
 	endif
 endfunction
@@ -62,10 +62,84 @@ endfunction
 After defining said function, you can create a mapping to enter the mode. Be sure to use `<expr>`. Example:
 
 ```viml
-nnoremap <expr> <leader>m libmodal#Enter('MyNewModeName', funcref('s:MyNewMode'))
+command! FooModeEnter call libmodal#Enter('FOO', funcref('s:FooMode'))
+nnoremap <expr> <leader>n FooModeEnter
 ```
 
 __Note the `funcref`__. It is important that it be present, else the call to `libmodal#Enter` will fail.
+
+## Key Combinations
+
+Although `libmodal` will overwrite your mode's unique variable with each key press from a user, a `modeCallback` function can track previous keypresses in order to determine what action should be taken.
+
+Here is an example that shows how to perform an action if the user presses `zfo`:
+
+```viml
+" Define history variable
+let s:barModeInputHistory = ''
+
+" Create function to conditionally clear history.
+function! s:ClearHistory(indexToCheck)
+	" Only clear if there was actually enough input
+	"     to reach the index specified.
+	if len(s:barModeInputHistory)-1 >= a:indexToCheck
+		let s:barModeInputHistory = ''
+	endif
+endfunction
+
+" Define mode function
+function! s:BarMode()
+	" Concatenate history string with input
+	let s:barModeInputHistory .= g:barModeInput
+
+	" Perform actions based on the history.
+	if s:barModeInputHistory[0] ==# 'z'
+		" Check if there are characters at index '1'.
+		if s:barModeInputHistory[1] ==# 'f'
+			" Check if there are characters at index '2'.
+			if s:barModeInputHistory[2] ==# 'o'
+				echom 'It works!'
+				let l:index = 0
+			" Clear the history if a character was provided at index
+			"     '2' and it does not match any previous cases.
+			else
+				let l:index = 2
+			endif
+
+		" Clear the history if a character was provided at index '1'
+		"     and it does not match any previous cases.
+		else
+			let l:index = 1
+		endif
+	else
+		let l:index = 0
+	endif
+
+	call s:ClearHistory(l:index)
+endfunction
+```
+
+And then to enter that mode, you can call:
+
+```viml
+libmodal#Enter('BAR', funcref('s:BarMode'))
+```
+
+Note that any approach will work for tracking the history of input— this is just an example. Because `libmodal` accepts a function as a parameter, its limitations are few.
+
+## Submodes
+
+`libmodal` has built-in support for entering additional modes while already in a `libmodal` mode.
+
+To enter another mode, one must only call `libmodal#Enter` from within a `modeCallback`. Additionally, when a user presses `<Esc>` they will automatically be taken back to the mode that they were previously inside of.
+
+To display this feature, one may alter the `echom 'It works!'` line from the above example, and change it to the following:
+
+```viml
+call libmodal#Enter('BAR2', funcref('s:BarMode'))
+```
+
+This will trigger `libmodal#Enter` to start a new mode called 'BAR2'. When the user presses `<Esc>`, they will automatically be returned to 'BAR'.
 
 # Configuration
 

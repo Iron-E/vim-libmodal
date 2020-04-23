@@ -5,18 +5,14 @@
 
 `vim-libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal).
 
-The entrance of modes is user-defined, and their exit is set to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
-
-# Requirements
-
-* `vim>=8.2` or `nvim>=0.4.0`
+The entrance of modes is user-defined, and their exit is defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
 
 # Installation
 
 Use `packadd` or one of the many package managers:
 
 | Manager   | Command                                                   |
-|:---------:|:---------------------------------------------------------:|
+|:---------:|:---------------------------------------------------------|
 | dein.vim  | `call dein#add('https://github.com/Iron_E/vim-libmodal')` |
 | NeoBundle | `NeoBundle 'https://github.com/Iron_E/vim-libmodal'`      |
 | Vim-Plug  | `Plug 'https://github.com/Iron_E/vim-libmodal'`           |
@@ -30,10 +26,11 @@ For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://g
 
 `libmodal#Enter` takes two arguments: `modeName` and `modeCallback`.
 
-| Arg            | Use                                                          |
-|:--------------:|:------------------------------------------------------------:|
-| `modeName`     | The name for the mode when prompting the user.               |
-| `modeCallback` | The function used to control the mode. Takes one char param. |
+| Arg            | Index | Use                                                          |
+|:--------------:|:-----:|:-------------------------------------------------------------|
+| `modeName`     | 0     | The name for the mode when prompting the user.               |
+| `modeCallback` | 1     | The function used to control the mode. Takes one char param. |
+| `supressExit`  | 2     | Whether or not to leave the mode on (`<Esc>`).               |
 
 ## Receiving Input
 
@@ -67,6 +64,18 @@ nnoremap <expr> <leader>n FooModeEnter
 ```
 
 __Note the `funcref`__. It is important that it be present, else the call to `libmodal#Enter` will fail.
+
+## Supressing Exit
+
+When the `supressExit` parameter is specified, `libmodal#Enter` will ignore `<Esc>` presses and instead listen for changes to a unique variable created for the specific purpose of exiting the mode.
+
+The variable is generated as follows:
+
+```viml
+let g:{tolower(a:modeName)}ModeExit = 0
+```
+
+When this variable becomes set to `1`, the mode will exit the next time that the `modeCallback` function returns.
 
 ## Key Combinations
 
@@ -146,6 +155,6 @@ This will trigger `libmodal#Enter` to start a new mode called 'BAR2'. When the u
 The following highlight groups can be configured to change the mode's colors:
 
 | Name             | Default      | Description                         |
-|:----------------:|:------------:|:-----------------------------------:|
+|:----------------:|:------------:|:-----------------------------------|
 | `LibmodalPrompt` | `ModeMsg`    | Color for the mode text.            |
 | `LibmodalStar`   | `StatusLine` | Color for the `*` at the beginning. |

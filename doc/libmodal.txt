@@ -4,7 +4,7 @@
 Forked From: vim-win – https://github.com/dstein64/vim-win
 Original Author: Daniel Steinberg – https://www.dannyadam.com
 
-Author: Iron-E – https://github.com/Iron-E & https://gitlab.com/Iron_E
+Author: Iron-E – https://github.com/Iron-E & https://gitlab.com/Iron-E
 Web: https://github.com/Iron-E/vim-libmodal
 
 1. Requirements                            |libmodal-requirements|
@@ -14,7 +14,7 @@ Web: https://github.com/Iron-E/vim-libmodal
 
 |libmodal| is a Neo/vim library/plugin aimed at simplifying the creation
 of new "modes" (e.g. Insert, Normal). The entrance of modes is
-user-defined, and their exit is set to `<Esc>`. The function and name of
+user-defined, and their exit defaults to `<Esc>`. The function and name of
 modes is also user-defined, and is outlined in |libmodal-usage|.
 
 ============================================================================
@@ -32,21 +32,25 @@ Package Managers ~
 
 Manager    Command
 -------    -------
-dein.vim   `call dein#add('https://github.com/Iron_E/vim-libmodal')`
-NeoBundle  `NeoBundle 'https://github.com/Iron_E/vim-libmodal'`
-Vim-Plug   `Plug 'https://github.com/Iron_E/vim-libmodal'`
-Vundle     `Plugin 'https://github.com/Iron_E/vim-libmodal'`
+dein.vim   `call dein#add('https://github.com/Iron-E/vim-libmodal')`
+NeoBundle  `NeoBundle 'https://github.com/Iron-E/vim-libmodal'`
+Vim-Plug   `Plug 'https://github.com/Iron-E/vim-libmodal'`
+Vundle     `Plugin 'https://github.com/Iron-E/vim-libmodal'`
 
 ============================================================================
 3. Usage                                   *libmodal-usage*
                                                             *libmodal#Enter*
 
-|libmodal#Enter| takes two arguments: `modeName` and `modeCallback`.
+|libmodal#Enter| takes three parameters. These parameters are not formally named
+by the editor (as |libmodal#Enter| is declared `libmodal#Enter(`|...|`)` ).
+However, the names of these parameters will be used throughout the document to
+describe the index of the parameter (see |E740|).
 
-Arg            Use
----            ---
-`modeName`     The name for the mode when prompting the user.
-`modeCallback` The function used to control the mode. Takes one char param.
+Arg            Index Use
+---            ----- ---
+`modeName`     0     The name for the mode when prompting the user.
+`modeCallback` 1     The function used to control the mode.
+`supressExit`  2     Whether or not to leave the mode on (`<Esc>`).
 
 Receiving Input ~
                                                   *libmodal-receiving-input*
@@ -61,6 +65,21 @@ receiving said input. The variable is generated as follows:
 
 For example, if `modeName` is 'FOO', then the variable that is created is
 `g:fooModeInput`.
+
+Supressing Exit ~
+                                                  *libmodal-supressing-exit*
+
+When the `supressExit` parameter is specified, |libmodal#Enter| will ignore
+`<Esc>` presses and instead listen for changes to a unique variable created
+for the specific purpose of exiting the mode. The variable is generated as
+follows:
+
+>
+	let g:{tolower(a:modeName)}ModeExit = 0
+<
+
+When this variable becomes set to `1`, the mode will exit the next time that
+the `modeCallback` function returns.
 
 Creating Modes ~
                                                    *libmodal-creating-modes*

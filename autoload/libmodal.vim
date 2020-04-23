@@ -101,19 +101,23 @@ endfunction
 
 " Runs the vim-libmodal command prompt loop. The function takes an optional
 " argument specifying how many times to run (runs until exiting by default).
-function! libmodal#Enter(modeName, modeCallback)
+function! libmodal#Enter(...)
 	if !s:CheckVersion() | return | endif
 	" Define mode indicator
 	let l:indicator = [
 	\	 ['LibmodalStar', '*'],
 	\	 ['None', ' '],
-	\	 ['LibmodalPrompt', a:modeName],
+	\	 ['LibmodalPrompt', a:0],
 	\	 ['None', ' > ']
 	\]
 	" Initialize the window state for the mode.
 	let l:winState = s:Init()
 
-	let l:input = tolower(a:modeName) . "ModeInput"
+	" Name of variable used for input.
+	let l:input = tolower(a:0) . "ModeInput"
+	" Name of variable used to control the exit.
+	let l:exit = tolower(a:0) . "ModeExit"
+	let g:{l:exit} = 0
 
 	" Outer loop to keep accepting commands
 	while 1
@@ -131,12 +135,14 @@ function! libmodal#Enter(modeName, modeCallback)
 			" Accept input
 			let g:{l:input} = s:GetChar()
 
-			" Break on <Esc>
-			if g:{l:input} ==# "\<Esc>"
+			" Break on <Esc> by default.
+			" If the user wishes to `supressExit`, then it will listen for
+			"     the user's custom exit event.
+			if (g:{l:input} ==# "\<Esc>" && !a:2) || (g:{l:exit} && a:2)
 				break
 			else
 				" Pass input to calling function.
-				call a:modeCallback()
+				call a:1()
 			endif
 		catch
 			call s:Beep()

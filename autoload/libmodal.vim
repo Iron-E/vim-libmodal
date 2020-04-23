@@ -1,57 +1,12 @@
 let s:popupwin = has('popupwin')
 let s:floatwin = exists('*nvim_open_win') && exists('*nvim_win_close')
 
-function! s:Contains(list, element)
-	return index(a:list, a:element) !=# -1
-endfunction
 
-function! s:GetChar()
-	try
-		while 1
-			let l:modeInput = getchar()
-			if v:mouse_win ># 0 | continue | endif
-			if l:modeInput ==# "\<CursorHold>" | continue | endif
-			break
-		endwhile
-	catch
-		" E.g., <c-c>
-		let l:modeInput = char2nr("\<esc>")
-	endtry
-	if type(l:modeInput) ==# v:t_number
-		let l:modeInput = nr2char(l:modeInput)
-	endif
-	return l:modeInput
-endfunction
-
-" Takes a list of lists. Each sublist is comprised of a highlight group name
-" and a corresponding string to echo.
-function! s:Echo(echo_list)
-	mode
-	for [l:hlgroup, l:string] in a:echo_list
-		execute 'echohl ' . l:hlgroup | echon l:string
-	endfor
-	echohl None
-endfunction
-
-function! s:ShowError(message)
-	let l:echo_list = []
-	call add(l:echo_list, ['Title', "vim-libmodal error\n"])
-	call add(l:echo_list, ['Error', a:message])
-	call add(l:echo_list, ['Question', "\n[Press any key to return]"])
-	call s:Echo(l:echo_list)
-	call s:GetChar()
-	redraw | echo ''
-endfunction
-
-function! s:ShowWarning(message)
-	let l:echo_list = []
-	call add(l:echo_list, ['Title', "vim-libmodal warning\n"])
-	call add(l:echo_list, ['Error', a:message])
-	call add(l:echo_list, ['Question', "\n[Press any key to return]"])
-	call s:Echo(l:echo_list)
-	call s:GetChar()
-	redraw | echo ''
-endfunction
+" #  ____       _            _
+" # |  _ \ _ __(_)_   ____ _| |_ ___
+" # | |_) | '__| \ \ / / _` | __/ _ \
+" # |  __/| |  | |\ V / (_| | ||  __/
+" # |_|   |_|  |_| \_/ \__,_|\__\___|
 
 function! s:Beep()
 	execute "normal \<Esc>"
@@ -81,6 +36,62 @@ function! s:CheckVersion()
 	return 1
 endfunction
 
+function! s:Contains(list, element)
+	return index(a:list, a:element) !=# -1
+endfunction
+
+" Takes a list of lists. Each sublist is comprised of a highlight group name
+" and a corresponding string to echo.
+function! s:Echo(echo_list)
+	mode
+	for [l:hlgroup, l:string] in a:echo_list
+		execute 'echohl ' . l:hlgroup | echon l:string
+	endfor
+	echohl None
+endfunction
+
+function! s:GetChar()
+	try
+		while 1
+			let l:modeInput = getchar()
+			if v:mouse_win ># 0 | continue | endif
+			if l:modeInput ==# "\<CursorHold>" | continue | endif
+			break
+		endwhile
+	catch
+		" E.g., <c-c>
+		let l:modeInput = char2nr("\<esc>")
+	endtry
+	if type(l:modeInput) ==# v:t_number
+		let l:modeInput = nr2char(l:modeInput)
+	endif
+	return l:modeInput
+endfunction
+
+" Function that extracts
+function! s:GetComboKeys(comboDict) abort
+	" Define containers for the characters of each combo.
+	let l:keyChars = []
+
+	" Iterate over the keys of the a:combo dict.
+	for l:item in keys(a:comboDict)
+		let l:charArr = []
+
+		" Grab all the characters in the array.
+		for l:i in range(len(a:comboDict[l:item]))
+			let l:charArr = add(l:charArr, a:comboDict[l:item][l:i])
+		endfor
+
+		let keyChars = add(keyChars, l:charArr)
+	endfor
+
+	return l:keyChars
+endfunction
+
+function! s:LibmodalEnter(...) abort
+	" TODO: define unifying enter function
+endfunction
+
 " Returns a state that can be used for restoration.
 function! s:Init()
 	let l:winState = {
@@ -94,14 +105,60 @@ function! s:Init()
 	return l:winState
 endfunction
 
+function! s:ParseKeyCombos(testDict, subKeys, keyCommand) abort
+	let l:dictAccess = remove(a:subKeys, 0)
+
+	if len(a:subKeys) > 0
+
+		if !has_key(a:testDict, l:dictAccess)
+			let a:testDict[l:dictAccess] = {}
+		endif
+
+		let a:testDict[l:dictAccess] = s:Test(a:testDict[l:dictAccess], a:subKeys, a:keyCommand)
+
+	else
+
+		let a:testDict[l:dictAccess] = a:keyCommand
+
+	endif
+
+	return a:testDict
+endfunction
+
 function! s:Restore(state)
 	let &winwidth = a:state['winwidth']
 	let &winheight = a:state['winheight']
 endfunction
 
+function! s:ShowError(message)
+	let l:echo_list = []
+	call add(l:echo_list, ['Title', "vim-libmodal error\n"])
+	call add(l:echo_list, ['Error', a:message])
+	call add(l:echo_list, ['Question', "\n[Press any key to return]"])
+	call s:Echo(l:echo_list)
+	call s:GetChar()
+	redraw | echo ''
+endfunction
+
+function! s:ShowWarning(message)
+	let l:echo_list = []
+	call add(l:echo_list, ['Title', "vim-libmodal warning\n"])
+	call add(l:echo_list, ['Error', a:message])
+	call add(l:echo_list, ['Question', "\n[Press any key to return]"])
+	call s:Echo(l:echo_list)
+	call s:GetChar()
+	redraw | echo ''
+endfunction
+
+" #  ____        _     _ _
+" # |  _ \ _   _| |__ | (_) ___
+" # | |_) | | | | '_ \| | |/ __|
+" # |  __/| |_| | |_) | | | (__
+" # |_|    \__,_|_.__/|_|_|\___|
+
 " Runs the vim-libmodal command prompt loop. The function takes an optional
 " argument specifying how many times to run (runs until exiting by default).
-function! libmodal#Enter(...)
+function! libmodal#Enter(...) abort
 	if !s:CheckVersion() | return | endif
 	" Define mode indicator
 	let l:indicator = [
@@ -163,4 +220,37 @@ function! libmodal#Enter(...)
 	" Put the window back to the way it was before the mode enter.
 	call s:Restore(l:winState)
 	mode | echo ''
+endfunction
+
+function! libmodal#EnterWithCombos(...) abort
+
+endfunction
+
+" Transforms a key combination in the form of:
+" >
+"     {'<key_combo>': '<execute_string>'}
+" <
+"
+" And turns it into a dict that libmodal can parse.
+function! libmodal#Parse(comboDict) abort
+	" The keys of the `a:comboDict`.
+	let l:comboDictKeys = keys(a:comboDict)
+	" The keys of the `a:comboDict` separated into character arrays.
+	let l:separatedCombos = s:GetComboKeys(a:comboDict)
+	" A placeholder for the transformed dictionary.
+	let l:compatableComboDict = {}
+
+	" Iterate over the `l:separatedCombos`
+	for l:i in range(len(l:separatedCombos))
+		" Get the command for this combo
+		let l:comboCommand = l:comboDict[l:comboDictKeys[l:i]]
+
+		" Update the `l:compatableComboDict` to include the transformed sub-array of `l:separatedCombos`.
+		let l:compatableComboDict = s:ParseKeyCombos(
+		\	l:compatableComboDict, l:separatedCombos[i], l:comboCommand
+		\)
+	endfor
+
+	" Return the compatable combo dictionary.
+	return l:compatableComboDict
 endfunction

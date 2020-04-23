@@ -9,3 +9,4 @@ function! s:BarMode()
 endfunction
 
 command! BarModeEnter call libmodal#Enter('BAR' . s:barModeRecurse, funcref('s:BarMode'))
+execute 'BarModeEnter'

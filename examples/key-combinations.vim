@@ -12,7 +12,7 @@ function! s:BarMode()
 	if s:barModeInputHistory[0] ==# 'z'
 		if s:barModeInputHistory[1] ==# 'f'
 			if s:barModeInputHistory[2] ==# 'o'
-				echo 'It works!'
+				echom 'It works!'
 				let l:index = 0
 			else
 				let l:index = 2

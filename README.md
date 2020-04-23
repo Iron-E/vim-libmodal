@@ -26,11 +26,11 @@ For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://g
 
 `libmodal#Enter` takes two arguments: `modeName` and `modeCallback`.
 
-| Arg            | Index | Use                                                          |
-|:--------------:|:-----:|:-------------------------------------------------------------|
-| `modeName`     | 0     | The name for the mode when prompting the user.               |
-| `modeCallback` | 1     | The function used to control the mode. Takes one char param. |
-| `supressExit`  | 2     | Whether or not to leave the mode on (`<Esc>`).               |
+| Arg            | Index | Use                                            |
+|:--------------:|:-----:|:-----------------------------------------------|
+| `modeName`     | 0     | The name for the mode when prompting the user. |
+| `modeCallback` | 1     | The function used to control the mode.         |
+| `supressExit`  | 2     | Whether or not to leave the mode on (`<Esc>`). |
 
 ## Receiving Input
 

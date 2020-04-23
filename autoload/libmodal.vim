@@ -88,8 +88,34 @@ function! s:GetComboKeys(comboDict) abort
 	return l:keyChars
 endfunction
 
+" Underlying logic for entering a mode using the global variable to update input.
+" a:1 => `modeName` as `l:input`
+" a:2 => `modeCallback`
+" a:3 => `supressExit`
 function! s:LibmodalEnter(...) abort
-	" TODO: define unifying enter function
+	" If `supressExit` is off and user inputs escape.
+	" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
+	if (!a:3 && g:{a:1} ==# '')
+		return 0
+	endif
+
+	" Pass input to calling function.
+	call a:2()
+	return 1
+endfunction
+
+" Underlying logic for entering a mode using pre-defined combos.
+" a:1 => `modeName` as `l:input`
+" a:2 => `modeCombos`
+" a:3 => `supressExit`
+function! s:LibmodalEnterWithCombos(...) abort
+	if !exists('s:' . a:1 . 'ModeCombos')
+		let s:{a:1}ModeCombos = s:ParseKeyCombos(s:GetComboKeys(a:2))
+	endif
+
+
+
+	return 1
 endfunction
 
 " Returns a state that can be used for restoration.
@@ -105,11 +131,24 @@ function! s:Init()
 	return l:winState
 endfunction
 
+" Transforms a key combination in the form of:
+" >
+"     {'<key_combo>': '<execute_string>'}
+" <
+"
+" And turns it into a dict that libmodal can parse.
+" >
+"     {'k':
+"     \    'j' {
+"     \         'echo "Hello!"'
+"     \    \}
+"     \}
+" <
+" That defines a command for `kj` that echoes "Hello".
 function! s:ParseKeyCombos(testDict, subKeys, keyCommand) abort
 	let l:dictAccess = remove(a:subKeys, 0)
 
 	if len(a:subKeys) > 0
-
 		if !has_key(a:testDict, l:dictAccess)
 			let a:testDict[l:dictAccess] = {}
 		endif
@@ -117,11 +156,8 @@ function! s:ParseKeyCombos(testDict, subKeys, keyCommand) abort
 		let a:testDict[l:dictAccess] = s:ParseKeyCombos(
 		\	a:testDict[l:dictAccess], a:subKeys, a:keyCommand
 		\)
-
 	else
-
 		let a:testDict[l:dictAccess] = a:keyCommand
-
 	endif
 
 	return a:testDict
@@ -180,6 +216,8 @@ function! libmodal#Enter(...) abort
 		" Create the variable used to control the exit.
 		let l:exit = tolower(a:1) . "ModeExit"
 		let g:{l:exit} = 0
+	else
+		let l:exit = 0
 	endif
 
 	" Outer loop to keep accepting commands
@@ -187,7 +225,7 @@ function! libmodal#Enter(...) abort
 		try
 			" If `supressExit` is on and `modeCallback` has registered the exit variable.
 			" This check must be performed BEFORE `s:GetChar()`.
-			if (exists('l:exit') && g:{l:exit})
+			if (l:exit && g:{l:exit})
 				break
 			endif
 
@@ -204,14 +242,18 @@ function! libmodal#Enter(...) abort
 			" Accept input
 			let g:{l:input} = s:GetChar()
 
-			" If `supressExit` is off and user inputs escape.
-			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:2()`.
-			if (!exists('l:exit') && g:{l:input} ==# '')
-				break
+			" Only want to run this block once
+			if !exists('l:funcExt')
+				" If `a:2` is a function
+				if type(a:2) == v:t_func
+				" If `a:2` is a dictionary
+					let l:funcExt = ''
+				elseif type(a:2) == v:t_dict
+					let l:funcExt = 'WithCombos'
+				endif
 			endif
 
-			" Pass input to calling function.
-			call a:2()
+			let l:continue = s:LibmodalEnter{l:funcExt}(l:input, a:2, l:exit)
 		catch
 			call s:Beep()
 			let l:message = v:throwpoint . "\n" . v:exception
@@ -222,37 +264,5 @@ function! libmodal#Enter(...) abort
 	" Put the window back to the way it was before the mode enter.
 	call s:Restore(l:winState)
 	mode | echo ''
-endfunction
-
-function! libmodal#EnterWithCombos(...) abort
-
-endfunction
-
-" Transforms a key combination in the form of:
-" >
-"     {'<key_combo>': '<execute_string>'}
-" <
-"
-" And turns it into a dict that libmodal can parse.
-function! libmodal#Parse(comboDict) abort
-	" The keys of the `a:comboDict`.
-	let l:comboDictKeys = keys(a:comboDict)
-	" The keys of the `a:comboDict` separated into character arrays.
-	let l:separatedCombos = s:GetComboKeys(a:comboDict)
-	" A placeholder for the transformed dictionary.
-	let l:compatableComboDict = {}
-
-	" Iterate over the `l:separatedCombos`
-	for l:i in range(len(l:separatedCombos))
-		" Get the command for this combo
-		let l:comboCommand = l:comboDict[l:comboDictKeys[l:i]]
-
-		" Update the `l:compatableComboDict` to include the transformed sub-array of `l:separatedCombos`.
-		let l:compatableComboDict = s:ParseKeyCombos(
-		\	l:compatableComboDict, l:separatedCombos[i], l:comboCommand
-		\)
-	endfor
-
-	" Return the compatable combo dictionary.
-	return l:compatableComboDict
+	call garbagecollect()
 endfunction

@@ -126,6 +126,12 @@ function! libmodal#Enter(...)
 	" Outer loop to keep accepting commands
 	while 1
 		try
+			" If `supressExit` is on and `modeCallback` has registered the exit variable.
+			" This check must be performed BEFORE `s:GetChar()`.
+			if (exists('l:exit') && g:{l:exit})
+				break
+			endif
+
 			" Make sure that we are not in a command-line window.
 			if &buftype ==# 'nofile' && bufname('%') ==# '[Command Line]'
 				call s:Beep()
@@ -139,14 +145,14 @@ function! libmodal#Enter(...)
 			" Accept input
 			let g:{l:input} = s:GetChar()
 
-			" IF (!supressExit AND user pressed escape)
-			" OR (supressExit AND exit var IS True)
-			if (!exists('l:exit') && g:{l:input} ==# "\<Esc>") || (exists('l:exit') && g:{l:exit})
+			" If `supressExit` is off and user inputs escape.
+			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:2()`.
+			if (!exists('l:exit') && g:{l:input} ==# "\<Esc>")
 				break
-			else
-				" Pass input to calling function.
-				call a:2()
 			endif
+
+			" Pass input to calling function.
+			call a:2()
 		catch
 			call s:Beep()
 			let l:message = v:throwpoint . "\n" . v:exception

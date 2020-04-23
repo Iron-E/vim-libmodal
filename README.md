@@ -5,7 +5,7 @@
 
 `vim-libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal).
 
-The entrance of modes is user-defined, and their exit is defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
+The entrance of modes is user-defined, and their exit defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
 
 # Installation
 

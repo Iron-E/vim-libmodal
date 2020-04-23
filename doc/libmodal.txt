@@ -17,6 +17,8 @@ of new "modes" (e.g. Insert, Normal). The entrance of modes is
 user-defined, and their exit defaults to `<Esc>`. The function and name of
 modes is also user-defined, and is outlined in |libmodal-usage|.
 
+See: |vim-modes|
+
 ============================================================================
 1. Requirements                            *libmodal-requirements*
 

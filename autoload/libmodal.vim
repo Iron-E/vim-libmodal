@@ -114,7 +114,9 @@ function! s:ParseKeyCombos(testDict, subKeys, keyCommand) abort
 			let a:testDict[l:dictAccess] = {}
 		endif
 
-		let a:testDict[l:dictAccess] = s:Test(a:testDict[l:dictAccess], a:subKeys, a:keyCommand)
+		let a:testDict[l:dictAccess] = s:ParseKeyCombos(
+		\	a:testDict[l:dictAccess], a:subKeys, a:keyCommand
+		\)
 
 	else
 

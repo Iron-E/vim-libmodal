@@ -141,7 +141,7 @@ function! libmodal#Enter(...)
 
 			" IF (!supressExit AND user pressed escape)
 			" OR (supressExit AND exit var IS True)
-			if (!exists(l:exit) && g:{l:input} ==# "\<Esc>") || (exists(l:exit) && g:{l:exit})
+			if (!exists('l:exit') && g:{l:input} ==# "\<Esc>") || (exists('l:exit') && g:{l:exit})
 				break
 			else
 				" Pass input to calling function.

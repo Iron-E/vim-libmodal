@@ -147,7 +147,7 @@ function! libmodal#Enter(...)
 
 			" If `supressExit` is off and user inputs escape.
 			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:2()`.
-			if (!exists('l:exit') && g:{l:input} ==# "\<Esc>")
+			if (!exists('l:exit') && g:{l:input} ==# '')
 				break
 			endif
 

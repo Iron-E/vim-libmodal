@@ -107,17 +107,21 @@ function! libmodal#Enter(...)
 	let l:indicator = [
 	\	 ['LibmodalStar', '*'],
 	\	 ['None', ' '],
-	\	 ['LibmodalPrompt', a:000[0]],
+	\	 ['LibmodalPrompt', a:1],
 	\	 ['None', ' > ']
 	\]
 	" Initialize the window state for the mode.
 	let l:winState = s:Init()
 
 	" Name of variable used for input.
-	let l:input = tolower(a:000[0]) . "ModeInput"
-	" Name of variable used to control the exit.
-	let l:exit = tolower(a:000[0]) . "ModeExit"
-	let g:{l:exit} = 0
+	let l:input = tolower(a:1) . "ModeInput"
+
+	" If the third argument, representing exit supression, has been passed.
+	if len(a:000) > 2
+		" Create the variable used to control the exit.
+		let l:exit = tolower(a:1) . "ModeExit"
+		let g:{l:exit} = 0
+	endif
 
 	" Outer loop to keep accepting commands
 	while 1
@@ -135,14 +139,13 @@ function! libmodal#Enter(...)
 			" Accept input
 			let g:{l:input} = s:GetChar()
 
-			" Break on <Esc> by default.
-			" If the user wishes to `supressExit`, then it will listen for
-			"     the user's custom exit event.
-			if (g:{l:input} ==# "\<Esc>" && !a:000[2]) || (g:{l:exit} && a:000[2])
+			" IF (!supressExit AND user pressed escape)
+			" OR (supressExit AND exit var IS True)
+			if (!exists(l:exit) && g:{l:input} ==# "\<Esc>") || (exists(l:exit) && g:{l:exit})
 				break
 			else
 				" Pass input to calling function.
-				call a:000[1]()
+				call a:2()
 			endif
 		catch
 			call s:Beep()

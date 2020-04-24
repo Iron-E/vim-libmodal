@@ -12,30 +12,6 @@ function! s:Beep()
 	execute "normal \<Esc>"
 endfunction
 
-" Check vim/nvim version, show corresponding messages, and return a boolean
-" indicating whether check succeeded.
-function! s:CheckVersion()
-	if !has('patch-8.1.1140') && !has('nvim-0.4.0')
-		" Vim 8.1.1140 and nvim-0.4.0 updated the libmodalnr function to take a motion
-		" character, functionality utilized by vim-libmodal.
-		let l:message_lines = [
-		\	'vim-libmodal requires vim>=8.1.1140 or nvim>=0.4.0.',
-		\	'Use :version to check the current version.'
-		\]
-		call s:ShowError(join(l:message_lines, "\n"))
-		return 0
-	endif
-	if !s:popupwin && !s:floatwin
-		let l:message_lines = [
-		\	'Full vim-libmodal functionality requires vim>=8.2 or nvim>=0.4.0.',
-		\	'Use :version to check the current version.',
-		\	'Set g:libmodal_disable_version_warning = 1 to disable this warning.'
-		\]
-		call s:ShowWarning(join(l:message_lines, "\n"))
-	endif
-	return 1
-endfunction
-
 function! s:Contains(list, element)
 	return index(a:list, a:element) !=# -1
 endfunction
@@ -50,42 +26,59 @@ function! s:Echo(echo_list)
 	echohl None
 endfunction
 
-function! s:GetChar()
+" Returns a state that can be used for restoration.
+function! s:Init()
+	let l:winState = {
+	\	'winwidth': &winwidth,
+	\	'winheight': &winheight
+	\}
+	" Minimize winwidth and winheight so that moving around doesn't unexpectedly
+	" cause window resizing.
+	let &winwidth = max([1, &winminwidth])
+	let &winheight = max([1, &winminheight])
+	return l:winState
+endfunction
+
+" Get try to navigate `comboDict` through the chars in `comboString` and return the result.
+function! s:Get(comboDict, comboString) abort
+	let l:dictAccess = a:3[0]
+
+	if has_key(a:comboDict, l:dictAccess)
+		let l:valType = type(a:comboDict[l:dictAccess])
+		if  l:valType == v:t_dict
+			return s:Get(
+			\	a:comboDict[l:dictAccess], a:3[1:]
+			\)
+		elseif l:valType == v:t_string
+			return a:comboDict[l:dictAccess]
+		endif
+	endif
+
+	return 0
+endfunction
+
+function! s:GetChar() abort
 	try
 		while 1
+			" Get the next character.
 			let l:modeInput = getchar()
-			if v:mouse_win ># 0 | continue | endif
-			if l:modeInput ==# "\<CursorHold>" | continue | endif
-			break
+			" Break condition
+			" XXX: this might be broken, you won't know until you test older stuff.
+			if !(v:mouse_win < 1 && l:modeInput ==# "\<CursorHold>")
+				break
+			endif
 		endwhile
 	catch
-		" E.g., <c-c>
-		let l:modeInput = char2nr("\<esc>")
+		" Tell the outer function to break.
+		return 0
 	endtry
+
+	" If the user inputs a raw number, convert it back to a string.
 	if type(l:modeInput) ==# v:t_number
 		let l:modeInput = nr2char(l:modeInput)
 	endif
+
 	return l:modeInput
-endfunction
-
-" Function that extracts
-function! s:GetComboKeys(comboDict) abort
-	" Define containers for the characters of each combo.
-	let l:keyChars = []
-
-	" Iterate over the keys of the a:combo dict.
-	for l:item in keys(a:comboDict)
-		let l:charArr = []
-
-		" Grab all the characters in the array.
-		for l:i in range(len(a:comboDict[l:item]))
-			let l:charArr = add(l:charArr, a:comboDict[l:item][l:i])
-		endfor
-
-		let keyChars = add(keyChars, l:charArr)
-	endfor
-
-	return l:keyChars
 endfunction
 
 " Underlying logic for entering a mode using the global variable to update input.
@@ -110,25 +103,15 @@ endfunction
 " a:3 => `supressExit`
 function! s:LibmodalEnterWithCombos(...) abort
 	if !exists('s:' . a:1 . 'ModeCombos')
-		let s:{a:1}ModeCombos = s:ParseKeyCombos(s:GetComboKeys(a:2))
+		let s:{a:1}ModeCombos = s:NewComboDict(s:SplitArgDict(a:2))
 	endif
 
-
+	if 0
+		return 0
+		unlet s:{a:1}ModeCombos
+	endif
 
 	return 1
-endfunction
-
-" Returns a state that can be used for restoration.
-function! s:Init()
-	let l:winState = {
-	\	'winwidth': &winwidth,
-	\	'winheight': &winheight
-	\}
-	" Minimize winwidth and winheight so that moving around doesn't unexpectedly
-	" cause window resizing.
-	let &winwidth = max([1, &winminwidth])
-	let &winheight = max([1, &winminheight])
-	return l:winState
 endfunction
 
 " Transforms a key combination in the form of:
@@ -145,29 +128,31 @@ endfunction
 "     \}
 " <
 " That defines a command for `kj` that echoes "Hello".
-function! s:ParseKeyCombos(testDict, subKeys, keyCommand) abort
+function! s:NewComboDict(comboDict, subKeys, keyCommand) abort
 	let l:dictAccess = remove(a:subKeys, 0)
 
 	if len(a:subKeys) > 0
-		if !has_key(a:testDict, l:dictAccess)
-			let a:testDict[l:dictAccess] = {}
+		if !has_key(a:comboDict, l:dictAccess)
+			let a:comboDict[l:dictAccess] = {}
 		endif
 
-		let a:testDict[l:dictAccess] = s:ParseKeyCombos(
-		\	a:testDict[l:dictAccess], a:subKeys, a:keyCommand
+		let a:comboDict[l:dictAccess] = s:NewComboDict(
+		\	a:comboDict[l:dictAccess], a:subKeys, a:keyCommand
 		\)
 	else
-		let a:testDict[l:dictAccess] = a:keyCommand
+		let a:comboDict[l:dictAccess] = a:keyCommand
 	endif
 
-	return a:testDict
+	return a:comboDict
 endfunction
 
+" Change the window to some `state`.
 function! s:Restore(state)
 	let &winwidth = a:state['winwidth']
 	let &winheight = a:state['winheight']
 endfunction
 
+" Show some error `message`.
 function! s:ShowError(message)
 	let l:echo_list = []
 	call add(l:echo_list, ['Title', "vim-libmodal error\n"])
@@ -178,6 +163,7 @@ function! s:ShowError(message)
 	redraw | echo ''
 endfunction
 
+" Show some warning `messaage`.
 function! s:ShowWarning(message)
 	let l:echo_list = []
 	call add(l:echo_list, ['Title', "vim-libmodal warning\n"])
@@ -188,6 +174,30 @@ function! s:ShowWarning(message)
 	redraw | echo ''
 endfunction
 
+" Function that extracts all of the `keys()` in `a:comboDict` and returns them as a list of character arrays.
+function! s:SplitArgDict(comboDict) abort
+	" Define containers for the characters of each combo.
+	let l:keyChars = []
+
+	" Iterate over the keys of the a:combo dict.
+	for l:item in keys(a:comboDict)
+		let l:keyChars = add(
+		\	keyChars, s:SplitString(a:comboDict[l:item])
+		\)
+	endfor
+
+	return l:keyChars
+endfunction
+
+function s:SplitString(stringToSplit) abort
+	let l:charArr = []
+
+	for l:i in range(len(a:stringToSplit))
+		let l:charArr = add(l:charArr, a:stringToSplit[l:i])
+	endfor
+endfunction
+
+
 " #  ____        _     _ _
 " # |  _ \ _   _| |__ | (_) ___
 " # | |_) | | | | '_ \| | |/ __|
@@ -197,7 +207,6 @@ endfunction
 " Runs the vim-libmodal command prompt loop. The function takes an optional
 " argument specifying how many times to run (runs until exiting by default).
 function! libmodal#Enter(...) abort
-	if !s:CheckVersion() | return | endif
 	" Define mode indicator
 	let l:indicator = [
 	\	 ['LibmodalStar', '*'],

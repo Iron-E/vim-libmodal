@@ -45,7 +45,7 @@ endfunction
 " * The highlighted `hl_list` as one string.
 function! s:Highlight(hl_list)
 	l:text = ''
-	for [l:hlgroup, l:string] in a:echo_list
+	for [l:hlgroup, l:string] in a:hl_list
 		l:text .= execute 'echohl ' . l:hlgroup | echon l:string
 	endfor
 	return l:text

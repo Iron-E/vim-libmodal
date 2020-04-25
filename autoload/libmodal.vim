@@ -124,14 +124,20 @@ endfunction
 " * `1` => the calling function should continue.
 function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 	" Initialize variables necessary to execute combo modes.
+	echom '.' | echom '.' | echom '.' | echom '.'
+	echom 'started'
 	if !exists('s:' . a:modeName . 'ModeCombos')
+		echom 'enetered'
+
 		" Build a pseudo-parse-tree.
 		let s:{a:modeName}ModeCombos = {}
-		for l:subKeys in s:SplitArgDict(a:modeCombos)
+		for l:splitCombos in s:SplitArgDict(a:modeCombos)
+			echom 'l:splitCombos IS >>>>>>>>' l:splitCombos
 			let s:{a:modeName}ModeCombos = s:NewComboDict(
-			\	s:{a:modeName}ModeCombos, l:subKeys, a:modeCombos[join(l:subKeys, '')]
+			\	s:{a:modeName}ModeCombos, l:splitCombos, a:modeCombos[join(l:splitCombos, '')]
 			\)
 		endfor
+
 		" Initialize the input history variable.
 		let s:{a:modeName}ModeInput = ''
 	endif
@@ -156,8 +162,8 @@ endfunction
 " * Transforms a `comboDict` into a pseudo-parse-tree.
 " PARAMS:
 " * `comboDict` => The user's `comboDict`.
-" * `subKeys` => The combo split into chars.
-" * `keyCommand` => The command to map `subKeys` to.
+" * `splitCombos` => The combo split into chars.
+" * `keyCommand` => The command to map `splitCombos` to.
 " RETURNS:
 " * The existing `comboDict` as a pseudo-parse-tree.
 " EXAMPLE:
@@ -175,16 +181,16 @@ endfunction
 "     \}
 " <
 " That defines a command for `kj` that echoes "Hello".
-function! s:NewComboDict(comboDict, subKeys, keyCommand) abort
-	let l:comboChar = remove(a:subKeys, 0)
+function! s:NewComboDict(comboDict, splitCombos, keyCommand) abort
+	let l:comboChar = remove(a:splitCombos, 0)
 
-	if len(a:subKeys) > 0
+	if len(a:splitCombos) > 0
 		if !has_key(a:comboDict, l:comboChar)
 			let a:comboDict[l:comboChar] = {}
 		endif
 
 		let a:comboDict[l:comboChar] = s:NewComboDict(
-		\	a:comboDict[l:comboChar], a:subKeys, a:keyCommand
+		\	a:comboDict[l:comboChar], a:splitCombos, a:keyCommand
 		\)
 	else
 		let a:comboDict[l:comboChar] = a:keyCommand
@@ -343,7 +349,7 @@ function! libmodal#Enter(...) abort
 				call a:2()
 			" If `a:2` is a dictionary
 			elseif type(a:2) == v:t_dict
-				call s:LibmodalEnterWithCombos(a:1, a:2)
+				call s:LibmodalEnterWithCombos(tolower(a:1), a:2)
 			else | break
 			endif
 		catch

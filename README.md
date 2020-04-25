@@ -30,7 +30,10 @@ For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://g
 |:--------------:|:-----:|:-----------------------------------------------|
 | `modeName`     | 0     | The name for the mode when prompting the user. |
 | `modeCallback` | 1     | The function used to control the mode.         |
+| `modeCombos`   | 1     | A dictionary of key combos.                    |
 | `supressExit`  | 2     | Whether or not to leave the mode on (`<Esc>`). |
+
+Note that either `modeCallback` OR `modeCombos` may be specified, not both.
 
 ## Receiving Input
 

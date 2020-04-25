@@ -1,6 +1,6 @@
-let s:popupwin = has('popupwin')
-let s:floatwin = exists('*nvim_open_win') && exists('*nvim_win_close')
-
+let s:FALSE = 0
+let s:replacements = ['\.', ':', '(', ')', '{', '}', '[', ']', '+', '\*', '&', '\^', '%', '\$', ',', '@', '\!', '/', '?', '>', '<', '\\', '=']
+let s:TRUE = 1
 
 " #  ____       _            _
 " # |  _ \ _ __(_)_   ____ _| |_ ___
@@ -33,10 +33,22 @@ endfunction
 " * `echo_list` => the list of strings to echo.
 function! s:Echo(echo_list)
 	mode
+	echo s:Highlight(echo_list)
+endfunction
+
+" SUMMARY:
+" * Takes a list of lists. Each sublist is comprised of a highlight group name
+"   and a corresponding string to highlight.
+" PARAMS:
+" * `echo_list` => the list of strings to highlight.
+" RETURNS:
+" * The highlighted `hl_list` as one string.
+function! s:Highlight(hl_list)
+	l:text = ''
 	for [l:hlgroup, l:string] in a:echo_list
-		execute 'echohl ' . l:hlgroup | echon l:string
+		l:text .= execute 'echohl ' . l:hlgroup | echon l:string
 	endfor
-	echohl None
+	return l:text
 endfunction
 
 " SUMMARY:
@@ -196,6 +208,15 @@ function! s:NewComboDict(comboDict, splitCombos, keyCommand) abort
 	return a:comboDict
 endfunction
 
+function! s:NewIndicator(modeName) abort
+	return [
+	\	 ['LibmodalStar', '*'],
+	\	 ['None', ' '],
+	\	 ['LibmodalPrompt', a:modeName],
+	\	 ['None', ' > ']
+	\]
+endfunction
+
 " SUMMARY:
 " * Change the window to some `state`.
 " PARAMS:
@@ -270,13 +291,23 @@ function s:SplitString(stringToSplit) abort
 endfunction
 
 " SUMMARY:
+" * Check if a variable is set to 1 or not.
+" PARAMS:
+" * `var` => The variable whose value should be checked.
+" RETURNS:
+" * Whether or not `var` is set to `1`.
+function! s:True(var)
+	return s:IsNum(a:var, s:TRUE)
+endfunction
+
+" SUMMARY:
 " * Check if a variable is set to 0 or not.
 " PARAMS:
 " * `var` => The variable whose value should be checked.
 " RETURNS:
 " * Whether or not `var` is set to `0`.
 function! s:Zero(var)
-	return type(a:var) == v:t_number && a:var == 0
+	return s:IsNum(a:var, s:FALSE)
 endfunction
 
 " #  ____        _     _ _
@@ -290,16 +321,13 @@ endfunction
 "   argument specifying how many times to run (runs until exiting by default).
 " PARAMS:
 " * `a:1` => `modeName`
-" * `a:2` => `modeCallback` OR `modeCombos`
+" * `a:2` => `modeCallback` OR `modeCombos` OR `modeCommands`
 " * `a:3` => `supressExit`
+" * `a:4` => `prompt`
 function! libmodal#Enter(...) abort
 	" Define mode indicator
-	let l:indicator = [
-	\	 ['LibmodalStar', '*'],
-	\	 ['None', ' '],
-	\	 ['LibmodalPrompt', a:1],
-	\	 ['None', ' > ']
-	\]
+	let l:indicator = s:NewIndicator(a:1)
+
 	" Initialize the window state for the mode.
 	let l:winState = s:Init()
 
@@ -307,13 +335,41 @@ function! libmodal#Enter(...) abort
 	let l:input = tolower(a:1) . "ModeInput"
 
 	" If the third argument, representing exit supression, has been passed.
-	if len(a:000) > 2
+	if len(a:000) > 2 && s:True(a:3)
+
 		" Create the variable used to control the exit.
 		let l:exit = tolower(a:1) . "ModeExit"
 		let g:{l:exit} = 0
+
 	else
+
 		let l:exit = 0
+
 	endif
+
+	let l:showPrompt = len(a:000) > 3 && s:True(a:4)
+
+	" Create a completion function if there are preset commands.
+	if s:True(l:showPrompt)
+		function! a:2.provideCompletions(ArgLead,CmdLine,CursorPos) abort
+			let l:arglead = a:ArgLead
+			for l:replacement in s:replacements
+				let l:arglead = substitute(l:arglead, l:replacement, ' ', 'g')
+			endfor
+
+			let l:word = split(l:arglead)[-1]
+
+			let l:completions = []
+			for l:command in keys(self)
+				if stridx(l:completion, l:word) > -1
+					let l:completions = add(l:completions, l:command)
+				endif
+			endfor
+
+			return l:completions
+		endfunction
+	endif
+
 
 	" Outer loop to keep accepting commands
 	while 1
@@ -324,16 +380,30 @@ function! libmodal#Enter(...) abort
 
 			" Make sure that we are not in a command-line window.
 			if &buftype ==# 'nofile' && bufname('%') ==# '[Command Line]'
+
 				call s:Beep()
 				call s:ShowError('vim-libmodal does not work with the command-line window')
 				break
+
 			endif
 
-			" Print the indicator for the mode.
-			call s:Echo(l:indicator)
+			if s:True(l:showPrompt)
 
-			" Accept input
-			let g:{l:input} = s:GetChar()
+				" Prompt the user.
+				if type(a:2) == v:t_func
+					let g:{l:input} = input( s:Highlight(l:indicator) )
+				elseif type(a:2) == v:t_dict
+					let g:{l:input} = input( s:Highlight(l:indicator), '', 'customlist,a:2.provideCompletions' )
+				endif
+
+			else
+
+				" Print the indicator for the mode.
+				call s:Echo(l:indicator)
+				" Accept input
+				let g:{l:input} = s:GetChar()
+
+			endif
 
 			" If `supressExit` is off and user inputs escape.
 			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
@@ -342,18 +412,34 @@ function! libmodal#Enter(...) abort
 			endif
 
 			" If `a:2` is a function
-			if type(a:2) == v:t_func
-				call a:2()
+			if type(a:2) == v:t_func | call a:2()
+
 			" If `a:2` is a dictionary
 			elseif type(a:2) == v:t_dict
-				call s:LibmodalEnterWithCombos(tolower(a:1), a:2)
+
+				if s:True(l:showPrompt)
+
+					if has_key(a:2, g:{l:input})
+						execute a:2[g:{l:input}]
+					else
+						s:ShowError('Unknown command.')
+					endif
+
+				else | call s:LibmodalEnterWithCombos(tolower(a:1), a:2)
+
+				endif
+
 			else | break
+
 			endif
+
 		catch
+
 			call s:Beep()
 			let l:message = v:throwpoint . "\n" . v:exception
 			call s:ShowError(l:message)
 			break
+
 		endtry
 	endwhile
 	" Put the window back to the way it was before the mode enter.

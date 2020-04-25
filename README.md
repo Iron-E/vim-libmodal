@@ -106,17 +106,16 @@ And then to enter that mode, you can call:
 call libmodal#Enter('BAR', s:barModeCombos)
 ```
 
-`libmodal`'s internal processing of that dictionary becomes more useful the larger the dictionary is. Internally, `s:barModeCombos` is rendered into a dictionary that looks like this:
+`libmodal`'s internal processing of that dictionary becomes more useful the larger the dictionary is. Internally, `s:barModeCombos` is rendered into a tree-like structure that looks like this:
 
-```viml
-let s:barModeCombosInternal = {
-\	'z': {
-\		'f': {
-\			'c': 'echom "It works!"',
-\			'o': 'tabnew'
-\		}
-\	}
-\}
+```mermaid
+graph TB
+	z{z} --> f{f}
+	f --> c{c}
+	f --> o{o}
+
+	c --> echo["echom &quot;It works!&quot;"]
+	o --> tabnew
 ```
 
 This allows `libmodal` to quickly determine which mappings are and are not part of the mode. Because of this method, modes with mappings that have similar beginnings are more efficient, and modes with more mappings get more benefit from the quick tree-like traversal.

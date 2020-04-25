@@ -249,7 +249,7 @@ function! s:SplitArgDict(comboDict) abort
 	" Iterate over the keys of the a:combo dict.
 	for l:item in keys(a:comboDict)
 		let l:keyChars = add(
-		\	keyChars, s:SplitString(a:comboDict[l:item])
+		\	keyChars, s:SplitString(l:item)
 		\)
 	endfor
 

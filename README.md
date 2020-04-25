@@ -108,15 +108,7 @@ call libmodal#Enter('BAR', s:barModeCombos)
 
 `libmodal`'s internal processing of that dictionary becomes more useful the larger the dictionary is. Internally, `s:barModeCombos` is rendered into a tree-like structure that looks like this:
 
-```mermaid
-graph TB
-	z{z} --> f{f}
-	f --> c{c}
-	f --> o{o}
-
-	c --> echo["echom &quot;It works!&quot;"]
-	o --> tabnew
-```
+![Internal Tree Structure](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbnp7en0gLS0-IGZ7Zn1cbmYgLS0-IGN7Y31cbmYgLS0-IG97b31cblxuYyAtLT4gZWNob1tcImVjaG9tICZxdW90O0l0IHdvcmtzISZxdW90O1wiXVxubyAtLT4gdGFibmV3IiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0 "Internal Tree Structure")
 
 This allows `libmodal` to quickly determine which mappings are and are not part of the mode. Because of this method, modes with mappings that have similar beginnings are more efficient, and modes with more mappings get more benefit from the quick tree-like traversal.
 

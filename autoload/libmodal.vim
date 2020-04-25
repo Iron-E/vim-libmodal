@@ -124,8 +124,6 @@ endfunction
 " * `1` => the calling function should continue.
 function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 	" Initialize variables necessary to execute combo modes.
-	echom '.' | echom '.' | echom '.' | echom '.'
-	echom 'started'
 	if !exists('s:' . a:modeName . 'ModeCombos')
 
 		" Build a pseudo-parse-tree.
@@ -142,25 +140,19 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Append latest input to history.
 	let s:{a:modeName}ModeInput .= g:{a:modeName}ModeInput
-	echom 's:' . a:modeName . 'ModeInput =' string(s:{a:modeName}ModeInput)
 
 	" Try to grab the command for the input.
 	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
-	echom 'l:command =' string(l:command)
 
 	" Read the 'RETURNS' section of `s:Get()`.
 	if type(l:command) == v:t_number
-		if l:command < 0
-			let l:clearInput = 1
-		endif
+		if l:command < 0 | let l:clearInput = 1 | endif
 	else
 		execute l:command
 		let l:clearInput = 1
 	endif
 
-	if exists('l:clearInput')
-		let s:{a:modeName}ModeInput = ''
-	endif
+	if exists('l:clearInput') | let s:{a:modeName}ModeInput = '' | endif
 endfunction
 
 " SUMMARY:

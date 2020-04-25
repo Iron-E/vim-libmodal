@@ -52,7 +52,10 @@ Arg            Index Use
 ---            ----- ---
 `modeName`     0     The name for the mode when prompting the user.
 `modeCallback` 1     The function used to control the mode.
+`modeCombos`   1     A dictionary of key combos.
 `supressExit`  2     Whether or not to leave the mode on (`<Esc>`).
+
+Note that either `modeCallback` OR `modeCombos` may be specified, not both.
 
 Receiving Input ~
                                                   *libmodal-receiving-input*
@@ -116,66 +119,65 @@ execute properly.
 Key Combinations ~
                                                  *libmodal-key-combinations*
 
-Although |libmodal| will overwrite your mode's unique variable with each key
-press from a user (see |libmodal-usage--receiving-input|), a `modeCallback`
-function can track previous keypresses in order to determine what action
-should be taken. Here is an example that shows how to perform an action if the
-user presses `zfo`:
+While normally |libmodal| dictates that a user should define their own
+function for controlling a mode, there is a way to specify key combinations.
+If the second argument is set to a `modeCombos` dictionary, |libmodal#Enter|
+will automatically detect the caller's intent and pass control over to an
+auxilliary function built to handle pre-defined combos.
+
+When providing `modeCombos`, it is important to note that one no longer has to
+receive input for themselves. Despite this, the unique variable (see
+|libmodal-receiving-input|) is still updated, and you can create a listener
+for it just like for any other variable.
+
+Note that one may still supress exit (see |libmodal-supressing-exit|) while
+defining key combinations.
+
+Here is an example that shows how to create a dictionary that defines the
+following actions:
+
+Combo Action
+----- ------
+`zfo` Echo a message saying "It works!"
+`zfc` Create a new tab.
 
 >
-	" Define history variable
-	let s:barModeInputHistory = ''
-
-	" Create function to conditionally clear history.
-	function! s:ClearHistory(indexToCheck)
-		" Only clear if there was actually enough input
-		"     to reach the index specified.
-		if len(s:barModeInputHistory)-1 >= a:indexToCheck
-			let s:barModeInputHistory = ''
-		endif
-	endfunction
-
-	" Define mode function
-	function! s:BarMode()
-		" Concatenate history string with input
-		let s:barModeInputHistory .= g:barModeInput
-
-		" Perform actions based on the history.
-		if s:barModeInputHistory[0] ==# 'z'
-			" Check if there are characters at index '1'.
-			if s:barModeInputHistory[1] ==# 'f'
-				" Check if there are characters at index '2'.
-				if s:barModeInputHistory[2] ==# 'o'
-					echom 'It works!'
-					let l:index = 0
-				" Clear the history if a character was provided at index
-				"     '2' and it does not match any previous cases.
-				else
-					let l:index = 2
-				endif
-
-			" Clear the history if a character was provided at index '1'
-			"     and it does not match any previous cases.
-			else
-				let l:index = 1
-			endif
-		else
-			let l:index = 0
-		endif
-
-		call s:ClearHistory(l:index)
-	endfunction
+	let s:barModeCombos = {
+	\	'zfo': 'echom "It works!"',
+	\	'zfc': 'tabnew'
+	\}
 <
 
 And then to enter that mode, you can call:
 
 >
-	call libmodal#Enter('BAR', funcref('s:BarMode'))
+	call libmodal#Enter('BAR', s:barModeCombos)
 <
 
-Note that any approach will work for tracking the history of input— this is
-just an example. Because |libmodal| accepts a function as a parameter, its
-limitations are few.
+|libmodal|'s internal processing of that dictionary becomes more useful the
+larger the dictionary is. Internally, `s:barModeCombos` is rendered into a
+dictionary that looks like this:
+
+>
+	let s:barModeCombosInternal = {
+	\	'z': {
+	\		'f': {
+	\			'c': 'echom "It works!"',
+	\			'o': 'tabnew'
+	\		}
+	\	}
+	\}
+<
+
+This allows |libmodal| to quickly determine which mappings are and are not
+part of the mode. Because of this method, modes with mappings that have
+similar beginnings are more efficient, and modes with more mappings get more
+benefit from the quick tree-like traversal.
+
+Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon
+entrance, so changes to the mapping dictionary that may occur while in a mode
+are not reflected until the mode is entered again and the dictionary is
+re-parsed.
 
 Submodes ~
                                                          *libmodal-submodes*

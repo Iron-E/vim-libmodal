@@ -132,7 +132,7 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		" Build a pseudo-parse-tree.
 		let s:{a:modeName}ModeCombos = {}
 		for l:splitCombos in s:SplitArgDict(a:modeCombos)
-			echom 'l:splitCombos IS >>>>>>>>' l:splitCombos
+			echom 'l:splitCombos IS >>>>>>>>' string(l:splitCombos)
 			let s:{a:modeName}ModeCombos = s:NewComboDict(
 			\	s:{a:modeName}ModeCombos, l:splitCombos, a:modeCombos[join(l:splitCombos, '')]
 			\)

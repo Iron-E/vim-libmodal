@@ -55,7 +55,7 @@ endfunction
 " Get a state that can be used for restoration.
 " RETURNS:
 " The state currently represented by the window layout.
-function! s:Init()
+function! s:Init() abort
 	let l:winState = {
 	\	'winwidth': &winwidth,
 	\	'winheight': &winheight
@@ -65,6 +65,10 @@ function! s:Init()
 	let &winwidth = max([1, &winminwidth])
 	let &winheight = max([1, &winminheight])
 	return l:winState
+endfunction
+
+function! s:IsNum(var, num) abort
+	return type(a:var) == v:t_number && a:var == a:num
 endfunction
 
 " SUMMARY:

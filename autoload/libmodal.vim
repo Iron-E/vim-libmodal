@@ -8,16 +8,29 @@ let s:floatwin = exists('*nvim_open_win') && exists('*nvim_win_close')
 " # |  __/| |  | |\ V / (_| | ||  __/
 " # |_|   |_|  |_| \_/ \__,_|\__\___|
 
+" SUMMARY:
+" Make vim beep at the user.
 function! s:Beep()
 	execute "normal \<Esc>"
 endfunction
 
+" SUMMARY:
+" * Return whether or not the `list` contains `element`.
+" PARAMS:
+" * `list` => the list to search in.
+" * `element` => the element to search for.
+" RETURNS:
+" * `0` => `list` does not contain `element`.
+" * `1` => `list` contains `element`.
 function! s:Contains(list, element)
 	return index(a:list, a:element) !=# -1
 endfunction
 
-" Takes a list of lists. Each sublist is comprised of a highlight group name
-" and a corresponding string to echo.
+" SUMMARY:
+" * Takes a list of lists. Each sublist is comprised of a highlight group name
+"   and a corresponding string to echo.
+" PARAMS:
+" * `echo_list` => the list of strings to echo.
 function! s:Echo(echo_list)
 	mode
 	for [l:hlgroup, l:string] in a:echo_list
@@ -26,7 +39,10 @@ function! s:Echo(echo_list)
 	echohl None
 endfunction
 
-" Returns a state that can be used for restoration.
+" SUMMARY:
+" Get a state that can be used for restoration.
+" RETURNS:
+" The state currently represented by the window layout.
 function! s:Init()
 	let l:winState = {
 	\	'winwidth': &winwidth,
@@ -39,24 +55,41 @@ function! s:Init()
 	return l:winState
 endfunction
 
+" SUMMARY:
 " Get try to navigate `comboDict` through the chars in `comboString` and return the result.
+" PARAMS:
+" * `comboDict` => The parsed dictionary of combos.
+" * `comboString` => the string that describes a list of characters to enter.
+" RETURNS:
+" * A command to run when `comboString` fully describes a combo in `comboDict`.
+" * `-1` => `comboString` is not ANYWHERE in the dict.
+" * `0` => `comboString` partially describes a combo in `comboDict.`
 function! s:Get(comboDict, comboString) abort
-	let l:dictAccess = a:3[0]
+	" Get the next character in the combo string.
+	let l:comboChar = a:comboString[0]
 
-	if has_key(a:comboDict, l:dictAccess)
-		let l:valType = type(a:comboDict[l:dictAccess])
+	" Make sure the dicitonary has a key for that value.
+	if has_key(a:comboDict, l:comboChar)
+		let l:valType = type(a:comboDict[l:comboChar])
+
 		if  l:valType == v:t_dict
 			return s:Get(
-			\	a:comboDict[l:dictAccess], a:3[1:]
+			\	a:comboDict[l:comboChar], a:comboString[1:]
 			\)
-		elseif l:valType == v:t_string
-			return a:comboDict[l:dictAccess]
+		elseif l:valType == v:t_string && len(a:comboString) <= 1
+			return a:comboDict[l:comboChar]
 		endif
+	elseif a:comboString == ''
+		return 0
 	endif
-
-	return 0
+	return -1
 endfunction
 
+" SUMMARY:
+" * Get input from the user.
+" RETURNS:
+" * The input from the user.
+" * `0` => there is no valid input.
 function! s:GetChar() abort
 	try
 		while 1
@@ -81,39 +114,53 @@ function! s:GetChar() abort
 	return l:modeInput
 endfunction
 
-" Underlying logic for entering a mode using the global variable to update input.
-" a:1 => `modeName` as `l:input`
-" a:2 => `modeCallback`
-" a:3 => `supressExit`
-function! s:LibmodalEnter(...) abort
-	" If `supressExit` is off and user inputs escape.
-	" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
-	if (!a:3 && g:{a:1} ==# '')
-		return 0
+" SUMMARY:
+" * Underlying logic for entering a mode using pre-defined combos.
+" PARAMS:
+" * a:1 => `modeName` as `l:input`
+" * a:2 => `modeCombos`
+" RETURNS:
+" * `0` => the calling function should break.
+" * `1` => the calling function should continue.
+function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
+	" Initialize variables necessary to execute combo modes.
+	if !exists('s:' . a:modeName . 'ModeCombos')
+		" Build a pseudo-parse-tree.
+		let s:{a:modeName}ModeCombos = {}
+		for l:subKeys in s:SplitArgDict(a:modeCombos)
+			let s:{a:modeName}ModeCombos = s:NewComboDict(
+			\	s:{a:modeName}ModeCombos, l:subKeys, a:modeCombos[join(l:subKeys, '')]
+			\)
+		endfor
+		" Initialize the input history variable.
+		let s:{a:modeName}ModeInput = ''
 	endif
 
-	" Pass input to calling function.
-	call a:2()
-	return 1
+	" Append latest input to history.
+	let s:{a:modeName}ModeInput .= g:{a:modeName}ModeInput
+
+	" Try to grab the command for the input.
+	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
+
+	" Read the 'RETURNS' section of `s:Get()`.
+	if type(l:command) == v:t_number
+		if l:command < 0
+			let s:{a:modeName}ModeInput = ''
+		endif
+	else
+		execute l:command
+	endif
 endfunction
 
-" Underlying logic for entering a mode using pre-defined combos.
-" a:1 => `modeName` as `l:input`
-" a:2 => `modeCombos`
-" a:3 => `supressExit`
-function! s:LibmodalEnterWithCombos(...) abort
-	if !exists('s:' . a:1 . 'ModeCombos')
-		let s:{a:1}ModeCombos = s:NewComboDict(s:SplitArgDict(a:2))
-	endif
-
-	if 0
-		return 0
-		unlet s:{a:1}ModeCombos
-	endif
-
-	return 1
-endfunction
-
+" SUMMARY:
+" * Transforms a `comboDict` into a pseudo-parse-tree.
+" PARAMS:
+" * `comboDict` => The user's `comboDict`.
+" * `subKeys` => The combo split into chars.
+" * `keyCommand` => The command to map `subKeys` to.
+" RETURNS:
+" * The existing `comboDict` as a pseudo-parse-tree.
+" EXAMPLE:
 " Transforms a key combination in the form of:
 " >
 "     {'<key_combo>': '<execute_string>'}
@@ -129,30 +176,36 @@ endfunction
 " <
 " That defines a command for `kj` that echoes "Hello".
 function! s:NewComboDict(comboDict, subKeys, keyCommand) abort
-	let l:dictAccess = remove(a:subKeys, 0)
+	let l:comboChar = remove(a:subKeys, 0)
 
 	if len(a:subKeys) > 0
-		if !has_key(a:comboDict, l:dictAccess)
-			let a:comboDict[l:dictAccess] = {}
+		if !has_key(a:comboDict, l:comboChar)
+			let a:comboDict[l:comboChar] = {}
 		endif
 
-		let a:comboDict[l:dictAccess] = s:NewComboDict(
-		\	a:comboDict[l:dictAccess], a:subKeys, a:keyCommand
+		let a:comboDict[l:comboChar] = s:NewComboDict(
+		\	a:comboDict[l:comboChar], a:subKeys, a:keyCommand
 		\)
 	else
-		let a:comboDict[l:dictAccess] = a:keyCommand
+		let a:comboDict[l:comboChar] = a:keyCommand
 	endif
 
 	return a:comboDict
 endfunction
 
-" Change the window to some `state`.
+" SUMMARY:
+" * Change the window to some `state`.
+" PARAMS:
+" * `state` => The previous layout of the windows.
 function! s:Restore(state)
 	let &winwidth = a:state['winwidth']
 	let &winheight = a:state['winheight']
 endfunction
 
-" Show some error `message`.
+" SUMMARY:
+" * Show some error `message`.
+" PARAMS:
+" * `message` => The error to show.
 function! s:ShowError(message)
 	let l:echo_list = []
 	call add(l:echo_list, ['Title', "vim-libmodal error\n"])
@@ -163,7 +216,10 @@ function! s:ShowError(message)
 	redraw | echo ''
 endfunction
 
-" Show some warning `messaage`.
+" SUMMARY:
+" * Show some warning `messaage`.
+" PARAMS:
+" * `message` => The warning to show.
 function! s:ShowWarning(message)
 	let l:echo_list = []
 	call add(l:echo_list, ['Title', "vim-libmodal warning\n"])
@@ -174,7 +230,12 @@ function! s:ShowWarning(message)
 	redraw | echo ''
 endfunction
 
-" Function that extracts all of the `keys()` in `a:comboDict` and returns them as a list of character arrays.
+" SUMMARY:
+" * Function that extracts all of the `keys()` in `a:comboDict` and returns them as a list of character arrays.
+" PARAMS:
+" * `comboDict` => the user-defined dictionary to transform into a list of split strings.
+" RETURNS:
+" * The list of combos as character arrays.
 function! s:SplitArgDict(comboDict) abort
 	" Define containers for the characters of each combo.
 	let l:keyChars = []
@@ -189,14 +250,31 @@ function! s:SplitArgDict(comboDict) abort
 	return l:keyChars
 endfunction
 
+" SUMMARY:
+" * Split some `stringToSplit` into individual characters.
+" PARAMS:
+" * `stringToSplit` => the string to split
+" RETURNS:
+" * The character array made from `stringToSplit`.
 function s:SplitString(stringToSplit) abort
 	let l:charArr = []
 
 	for l:i in range(len(a:stringToSplit))
 		let l:charArr = add(l:charArr, a:stringToSplit[l:i])
 	endfor
+
+	return l:charArr
 endfunction
 
+" SUMMARY:
+" * Check if a variable is set to 0 or not.
+" PARAMS:
+" * `var` => The variable whose value should be checked.
+" RETURNS:
+" * Whether or not `var` is set to `0`.
+function! s:Zero(var)
+	return type(a:var) == v:t_number && a:var == 0
+endfunction
 
 " #  ____        _     _ _
 " # |  _ \ _   _| |__ | (_) ___
@@ -204,8 +282,13 @@ endfunction
 " # |  __/| |_| | |_) | | | (__
 " # |_|    \__,_|_.__/|_|_|\___|
 
-" Runs the vim-libmodal command prompt loop. The function takes an optional
-" argument specifying how many times to run (runs until exiting by default).
+" SUMMARY:
+" * Runs the vim-libmodal command prompt loop. The function takes an optional
+"   argument specifying how many times to run (runs until exiting by default).
+" PARAMS:
+" * `a:1` => `modeName`
+" * `a:2` => `modeCallback` OR `modeCombos`
+" * `a:3` => `supressExit`
 function! libmodal#Enter(...) abort
 	" Define mode indicator
 	let l:indicator = [
@@ -232,11 +315,9 @@ function! libmodal#Enter(...) abort
 	" Outer loop to keep accepting commands
 	while 1
 		try
-			" If `supressExit` is on and `modeCallback` has registered the exit variable.
 			" This check must be performed BEFORE `s:GetChar()`.
-			if (l:exit && g:{l:exit})
-				break
-			endif
+			" If `supressExit` is on and `modeCallback` has registered the exit variable.
+			if !( s:Zero(l:exit) || s:Zero(g:{l:exit}) ) | break | endif
 
 			" Make sure that we are not in a command-line window.
 			if &buftype ==# 'nofile' && bufname('%') ==# '[Command Line]'
@@ -251,18 +332,20 @@ function! libmodal#Enter(...) abort
 			" Accept input
 			let g:{l:input} = s:GetChar()
 
-			" Only want to run this block once
-			if !exists('l:funcExt')
-				" If `a:2` is a function
-				if type(a:2) == v:t_func
-				" If `a:2` is a dictionary
-					let l:funcExt = ''
-				elseif type(a:2) == v:t_dict
-					let l:funcExt = 'WithCombos'
-				endif
+			" If `supressExit` is off and user inputs escape.
+			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
+			if s:Zero(g:{l:input}) || (s:Zero(a:3) && g:{a:1} ==# '')
+				break
 			endif
 
-			let l:continue = s:LibmodalEnter{l:funcExt}(l:input, a:2, l:exit)
+			" If `a:2` is a function
+			if type(a:2) == v:t_func
+				call a:2()
+			" If `a:2` is a dictionary
+			elseif type(a:2) == v:t_dict
+				call s:LibmodalEnterWithCombos(a:1, a:2)
+			else | break
+			endif
 		catch
 			call s:Beep()
 			let l:message = v:throwpoint . "\n" . v:exception

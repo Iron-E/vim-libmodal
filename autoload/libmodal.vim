@@ -1,4 +1,5 @@
 let s:FALSE = 0
+let s:completions = []
 let s:replacements = ['\.', ':', '(', ')', '{', '}', '[', ']', '+', '\*', '&', '\^', '%', '\$', ',', '@', '\!', '/', '?', '>', '<', '\\', '=']
 let s:TRUE = 1
 
@@ -402,71 +403,74 @@ function! libmodal#Prompt(...) abort
 		" Create the variable used to control the exit.
 		let l:exit = tolower(a:1) . "ModeExit"
 		let g:{l:exit} = 0
-	else | let l:exit = 0
-	endif
+	else | let l:exit = 0 | endif
 
-	" Define a function on the dictionary to provide completions.
-	function! a:2.provideCompletions(ArgLead,CmdLine,CursorPos) abort
-		let l:arglead = a:ArgLead
-		for l:replacement in s:replacements
-			let l:arglead = substitute(l:arglead, l:replacement, ' ', 'g')
-		endfor
-
-		let l:word = split(l:arglead)[-1]
-
-		let l:completions = []
-		for l:command in keys(self)
-			if stridx(l:completion, l:word) > -1
-				let l:completions = add(l:completions, l:command)
-			endif
-		endfor
-
-		return l:completions
-	endfunction
+	if type(a:2) == v:t_dict | l:completions = keys(a:2) | endif
 
 	" Outer loop to keep accepting commands
-	while 1
+	while 1 | try
 		mode
-		try
-			" This check must be performed BEFORE `s:GetChar()`.
-			" If `supressExit` is on and `modeCallback` has registered the exit variable.
-			if !(s:Zero(l:exit) || s:Zero(g:{l:exit})) || s:InCmdWindow()
-				break
-			endif
+		" This check must be performed BEFORE `s:GetChar()`.
+		" If `supressExit` is on and `modeCallback` has registered the exit variable.
+		if !(s:Zero(l:exit) || s:Zero(g:{l:exit})) || s:InCmdWindow() | break | endif
 
-			" Prompt the user.
-			let g:{l:input} = ''
-			if type(a:2) == v:t_func
-				let g:{l:input} = input( l:indicator )
-			elseif type(a:2) == v:t_dict
-				let g:{l:input} = input( l:indicator, '', 'customlist,' . string(funcref('a:2.provideCompletions')) )
-			endif
 
-			" Determine the correct action that should be taken on user input.
-			if type(a:2) == v:t_func
-				call a:2()
-			elseif type(a:2) == v:t_dict && g:{l:input} != ''
+		" Prompt the user.
+		let g:{l:input} = ''
+		if type(a:2) == v:t_func | let g:{l:input} = input( l:indicator )
+		elseif exists('l:completions')
+			let s:completions = l:completions
+			let g:{l:input} = input( l:indicator, '', 'customlist,libmodal#complete')
+		endif
 
-				if has_key(a:2, g:{l:input})
-					execute a:2[g:{l:input}]
-				else
-					call s:ShowError('Unknown command.')
-				endif
+		" Determine the correct action that should be taken on user input.
+		if type(a:2) == v:t_func | call a:2()
+		elseif type(a:2) == v:t_dict && g:{l:input} != ''
+			if has_key(a:2, g:{l:input})
+				execute a:2[g:{l:input}]
 			else
-				break
+				call s:ShowError('Unknown command.')
 			endif
+		else | break | endif
 
-		catch /^Vim:Interrupt$/ | break
-		catch
+	catch /^Vim:Interrupt$/ | break | catch
 
-			call s:Beep()
-			let l:message = v:throwpoint . "\n" . v:exception
-			call s:ShowError(l:message)
-			break
+		call s:Beep()
+		let l:message = v:throwpoint . "\n" . v:exception
+		call s:ShowError(l:message)
+		break
 
-		endtry
-	endwhile
+	endtry | endwhile
 	" Put the window back to the way it was before the mode enter.
 	mode | echo ''
 	call garbagecollect()
 endfunction
+
+" SUMMARY:
+" Provide completions based on the current `s:completions`.
+" PARAMS:
+" * `a:1` => the current line being edited, stops at the cursor.
+" * `a:2` => the current line being edited
+" * `a:3` => the position of the cursor
+" RETURNS:
+" The list of potential completion candidates from `s:completions`.
+function! libmodal#complete(...) abort
+	let l:arglead = a:1
+	for l:replacement in s:replacements
+		let l:arglead = substitute(l:arglead, l:replacement, ' ', 'g')
+	endfor
+
+	let l:word = split(l:arglead)[-1]
+
+	let l:completions = []
+	for l:completion in s:completions
+		echom 'TESTING >>' l:completion
+		if stridx(l:completion, l:word) > -1
+			echom '<< ACCEPTED'
+			let l:completions = add(l:completions, l:completion)
+		endif
+	endfor
+
+	return l:completions
+endfunction
+

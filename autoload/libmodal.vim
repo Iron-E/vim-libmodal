@@ -127,12 +127,10 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 	echom '.' | echom '.' | echom '.' | echom '.'
 	echom 'started'
 	if !exists('s:' . a:modeName . 'ModeCombos')
-		echom 'enetered'
 
 		" Build a pseudo-parse-tree.
 		let s:{a:modeName}ModeCombos = {}
 		for l:splitCombos in s:SplitArgDict(a:modeCombos)
-			echom 'l:splitCombos IS >>>>>>>>' string(l:splitCombos)
 			let s:{a:modeName}ModeCombos = s:NewComboDict(
 			\	s:{a:modeName}ModeCombos, l:splitCombos, a:modeCombos[join(l:splitCombos, '')]
 			\)
@@ -144,17 +142,24 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Append latest input to history.
 	let s:{a:modeName}ModeInput .= g:{a:modeName}ModeInput
+	echom 's:' . a:modeName . 'ModeInput =' string(s:{a:modeName}ModeInput)
 
 	" Try to grab the command for the input.
 	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
+	echom 'l:command =' string(l:command)
 
 	" Read the 'RETURNS' section of `s:Get()`.
 	if type(l:command) == v:t_number
 		if l:command < 0
-			let s:{a:modeName}ModeInput = ''
+			let l:clearInput = 1
 		endif
 	else
 		execute l:command
+		let l:clearInput = 1
+	endif
+
+	if exists('l:clearInput')
+		let s:{a:modeName}ModeInput = ''
 	endif
 endfunction
 

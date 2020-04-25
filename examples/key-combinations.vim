@@ -1,5 +1,5 @@
 let s:barModeCombos = {
-\	'zfo': 'echo "It works!"',
+\	'zfo': 'echom "It works!"',
 \	'zfc': 'tabnew'
 \}
 

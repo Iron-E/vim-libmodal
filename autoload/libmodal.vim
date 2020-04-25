@@ -46,7 +46,7 @@ endfunction
 function! s:Highlight(hl_list)
 	let l:text = ''
 	for [l:hlgroup, l:string] in a:hl_list
-		let l:text .= execute "echohl" l:hlgroup "| echon" l:string
+		let l:text .= execute "echohl " . l:hlgroup " | echon " . l:string
 	endfor
 	return l:text
 endfunction

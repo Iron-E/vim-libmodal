@@ -33,7 +33,7 @@ endfunction
 " * `echo_list` => the list of strings to echo.
 function! s:Echo(echo_list)
 	mode
-	echo s:Highlight(echo_list)
+	echo s:Highlight(a:echo_list)
 endfunction
 
 " SUMMARY:

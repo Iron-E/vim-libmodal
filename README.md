@@ -51,10 +51,10 @@ Use the built-in package manager or one of the various package managers.
 | `modeCommands` | 1     | A dictionary of commands→strings to execute.   |
 | `commandList`  | 2     | A list of the commands in a `modeCallback`.    |
 
-- Note that either `modeCallback` OR `modeCommands` may be specified, not both.
+- Note that _either_ `modeCallback` _or_ `modeCommands` may be specified, __not both__.
 - Note that `commandList` is an optional parameter.
 	- It is used as a completion source for when `modeCallback` is specified.
-	- Additionally, `commandList` is IGNORED when `modeCommands` is specified since completions can be created from the dictionary keys.
+	- Additionally, `commandList` is __ignored__ when `modeCommands` is specified since completions can be created from the dictionary keys.
 	- If `commandList` is not specified when `modeCallback` is, no completions will be provided for the prompt.
 
 ## Receiving Input
@@ -90,7 +90,7 @@ command! FooModeEnter call libmodal#Enter('FOO', funcref('s:FooMode'))
 nnoremap <expr> <leader>n FooModeEnter
 ```
 
-- Note the `funcref()` call. It must be there or else `libmodal#Enter` won't execute properly.
+- Note the `funcref()` call. __It must be there__ or else `libmodal#Enter` won't execute properly.
 
 ### Key Combinations
 
@@ -98,7 +98,7 @@ While normally `libmodal` dictates that a user should define their own function 
 
 When providing `modeCombos`, it is important to note that one no longer has to receive input for themselves. Despite this, the unique variable (see `libmodal-receiving-input`) is still updated, and you can create a listener for it just like for any other variable.
 
-- Note that |libmodal-exit-supression| is still compatable with defining key combinations.
+- Note that `libmodal-exit-supression` is still compatable with defining key combinations.
 
 Here is an example that shows how to create a dictionary that defines the following actions:
 
@@ -126,8 +126,8 @@ call libmodal#Enter('BAR', s:barModeCombos)
 
 This allows `libmodal` to quickly determine which mappings are and are not part of the mode. Because of this method, modes with mappings that have similar beginnings are more efficient, and modes with more mappings get more benefit from the quick tree-like traversal.
 
-- Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon entrance.
-	- Changes to the mapping dictionary that may occur while in a mode are not reflected until the mode is entered again and the dictionary is re-parsed.
+- Note that `libmodal#Enter` will only parse a `modeCombos` dict _once_ upon entrance.
+	- Changes to the mapping dictionary that may occur while in a mode _are not reflected_ until the mode is entered again and the dictionary is re-parsed.
 
 ### Exit Supression
 
@@ -180,7 +180,7 @@ call libmodal#Prompt('BAR', s:barModeCommands)
 call libmodal#Prompt('BAR', funcref('s:BarMode'), s:barModeCommandList)
 ```
 
-- Note that if you want to create commands with arguments, you will need to use a callback.
+- Note that if you want to create commands with arguments, _you will need to use a callback_.
 
 # Submodes
 

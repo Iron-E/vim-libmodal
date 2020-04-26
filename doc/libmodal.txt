@@ -215,12 +215,12 @@ the dictionary. See an example of this below:
 An equivalent to the above using a `modeCalback` would be:
 
 >
-	function! s:BarMode()
-		if g:barModeInput == 'new'
+	function! s:BarMode() abort
+		if g:barModeInput ==# 'new'
 			execute 'tabnew'
-		elseif g:barModeInput == 'tabclose'
+		elseif g:barModeInput ==# 'tabclose'
 			execute 'tabclose'
-		elseif g:barModeInput == 'tablast'
+		elseif g:barModeInput ==# 'tablast'
 			execute 'tablast'
 		endif
 	endfunction

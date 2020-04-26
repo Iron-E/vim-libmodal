@@ -423,14 +423,16 @@ function! libmodal#Prompt(...) abort
 		endif
 
 		" if a:2 is a function then call it.
-		if type(a:2) == v:t_func | call a:2()
+		if g:{l:input} != ''
+			if type(a:2) == v:t_func | call a:2()
 
-		" if a:2 is a dictionary, then determine if it has any commands that match.
-		elseif type(a:2) == v:t_dict && g:{l:input} != ''
-			if has_key(a:2, g:{l:input})
-				execute a:2[g:{l:input}]
-			else
-				call s:ShowError('Unknown command.')
+			" if a:2 is a dictionary, then determine if it has any commands that match.
+			elseif type(a:2) == v:t_dict
+				if has_key(a:2, g:{l:input})
+					execute a:2[g:{l:input}]
+				else
+					call s:ShowError('Unknown command.')
+				endif
 			endif
 		else | break | endif
 

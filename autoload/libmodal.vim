@@ -416,7 +416,7 @@ function! libmodal#Prompt(...) abort
 		let g:{l:input} = ''
 
 		" Prompt the user and use completions from the command dictionary.
-		if exists('l:completsion')
+		if exists('l:completions')
 			let s:completions = l:completions
 			let g:{l:input} = input(l:indicator, '', 'customlist,libmodal#complete')
 

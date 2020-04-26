@@ -397,7 +397,9 @@ function! libmodal#Prompt(...) abort
 	" Name of variable used for input.
 	let l:input = tolower(a:1) . "ModeInput"
 
-	if type(a:2) == v:t_dict | l:completions = keys(a:2) | endif
+	if type(a:2) == v:t_dict
+		let l:completions = keys(a:2)
+	endif
 
 	" Outer loop to keep accepting commands
 	while 1 | try

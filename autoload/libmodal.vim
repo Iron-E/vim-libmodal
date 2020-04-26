@@ -414,7 +414,7 @@ function! libmodal#Prompt(...) abort
 		let g:{l:input} = ''
 
 		" Prompt the user without completions if a callback is registered.
-		if type(a:2) == v:t_func | let g:{l:input} = input( l:indicator )
+		if type(a:2) == v:t_func | let g:{l:input} = input( l:indicator, '' )
 
 		" Prompt the user and use completions from the command dictionary.
 		elseif exists('l:completions')
@@ -424,17 +424,15 @@ function! libmodal#Prompt(...) abort
 
 		" if a:2 is a function then call it.
 		if g:{l:input} != ''
-			if type(a:2) == v:t_func | call a:2()
-
-			" if a:2 is a dictionary, then determine if it has any commands that match.
+			if type(a:2) == v:t_func
+				call a:2()
 			elseif type(a:2) == v:t_dict
-				if has_key(a:2, g:{l:input})
-					execute a:2[g:{l:input}]
-				else
-					call s:ShowError('Unknown command.')
+				if has_key(a:2, g:{l:input}) | execute a:2[g:{l:input}]
+				else | call s:ShowError('Unknown command.')
 				endif
 			endif
-		else | break | endif
+		else | break
+		endif
 
 	catch /^Vim:Interrupt$/ | break | catch
 

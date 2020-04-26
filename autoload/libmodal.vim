@@ -390,7 +390,6 @@ endfunction
 " PARAMS:
 " * `a:1` => `modeName`
 " * `a:2` => `modeCallback` OR `modeCommands`
-" * `a:3` => `supressExit`
 function! libmodal#Prompt(...) abort
 	" Define mode indicator
 	let l:indicator = '* ' . a:1 . ' > '
@@ -398,33 +397,33 @@ function! libmodal#Prompt(...) abort
 	" Name of variable used for input.
 	let l:input = tolower(a:1) . "ModeInput"
 
-	" If the third argument, representing exit supression, has been passed.
-	if len(a:000) > 2 && s:True(a:3)
-		" Create the variable used to control the exit.
-		let l:exit = tolower(a:1) . "ModeExit"
-		let g:{l:exit} = 0
-	else | let l:exit = 0 | endif
-
 	if type(a:2) == v:t_dict | l:completions = keys(a:2) | endif
 
 	" Outer loop to keep accepting commands
 	while 1 | try
+		" Redraw window
 		mode
-		" This check must be performed BEFORE `s:GetChar()`.
-		" If `supressExit` is on and `modeCallback` has registered the exit variable.
-		if !(s:Zero(l:exit) || s:Zero(g:{l:exit})) || s:InCmdWindow() | break | endif
+
+		" Make sure we are not in a command window
+		if s:InCmdWindow() | break | endif
 
 
 		" Prompt the user.
 		let g:{l:input} = ''
+
+		" Prompt the user without completions if a callback is registered.
 		if type(a:2) == v:t_func | let g:{l:input} = input( l:indicator )
+
+		" Prompt the user and use completions from the command dictionary.
 		elseif exists('l:completions')
 			let s:completions = l:completions
 			let g:{l:input} = input( l:indicator, '', 'customlist,libmodal#complete')
 		endif
 
-		" Determine the correct action that should be taken on user input.
+		" if a:2 is a function then call it.
 		if type(a:2) == v:t_func | call a:2()
+
+		" if a:2 is a dictionary, then determine if it has any commands that match.
 		elseif type(a:2) == v:t_dict && g:{l:input} != ''
 			if has_key(a:2, g:{l:input})
 				execute a:2[g:{l:input}]

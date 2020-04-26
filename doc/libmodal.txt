@@ -52,8 +52,8 @@ Arg            Index Use
 ---            ----- ---
 `modeName`     0     The name for the mode when prompting the user.
 `modeCallback` 1     The function used to control the mode.
-`modeCombos`   1     A dictionary of key combos.
-`supressExit`  2     Whether or not to leave the mode on (`<Esc>`).
+`modeCombos`   1     A dictionary of |libmodal-key-combinations|.
+`supressExit`  2     A flag to enable |libmodal-supressing-exit|.
 
 Note that either `modeCallback` OR `modeCombos` may be specified, not both.
 
@@ -178,6 +178,64 @@ Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon
 entrance, so changes to the mapping dictionary that may occur while in a mode
 are not reflected until the mode is entered again and the dictionary is
 re-parsed.
+
+Prompts ~
+                                                           *libmodal#Prompt*
+
+|libmodal#Prompt| takes two parameters. These parameters are not formally named
+by the editor (as |libmodal#Prompt| is declared `libmodal#Prompt(`|...|`)` ).
+However, the names of these parameters will be used throughout the document to
+describe the index of the parameter (see |E740|).
+
+Arg            Index Use
+---            ----- ---
+`modeName`     0     The name for the mode when prompting the user.
+`modeCallback` 1     The function used to control the mode.
+`modeCommands` 1     A dictionary of commands→strings to execute.
+
+Note that either `modeCallback` OR `modeCommands` may be specified, not both.
+
+                                                          *libmodal-prompts*
+
+Besides accepting user input like keys in |Normal-mode|, |libmodal| is also
+capable of prompting the user for input like |Cmdline-mode|. To define a
+|Cmdline-mode|-like prompt, use |libmodal#Prompt| rather than |libmodal#Enter|.
+
+When `modeCommands` is specified, completions are provided for every key in
+the dictionary. See an example of this below:
+
+>
+	let s:barModeCommands = {
+	\	'new': 'tabnew',
+	\	'close': 'tabclose',
+	\	'last': 'tablast'
+	\}
+<
+
+An equivalent to the above using a `modeCalback` would be:
+
+>
+	function! s:BarMode()
+		if g:barModeInput == 'new'
+			execute 'tabnew'
+		elseif g:barModeInput == 'tabclose'
+			execute 'tabclose'
+		elseif g:barModeInput == 'tablast'
+			execute 'tablast'
+		endif
+	endfunction
+<
+
+You can then enter the mode using one of the following commands (depending on
+whether or not you used a dictionary or a callback):
+
+>
+	call libmodal#Prompt('BAR', s:barModeCommands)
+	call libmodal#Prompt('BAR', funcref('s:BarMode'))
+<
+
+Note that if you want to create commands with arguments, you will need to use
+a callback.
 
 Submodes ~
                                                          *libmodal-submodes*

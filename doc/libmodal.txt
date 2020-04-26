@@ -1,16 +1,23 @@
 *libmodal.txt*          Plugin for managing tabs
 *libmodal*
+*vim-libmodal*
 
-Forked From: vim-win – https://github.com/dstein64/vim-win
-Original Author: Daniel Steinberg – https://www.dannyadam.com
-
-Author: Iron-E – https://github.com/Iron-E & https://gitlab.com/Iron-E
-Web: https://github.com/Iron-E/vim-libmodal
-
-1. Requirements                            |libmodal-requirements|
+1. About                                   |libmodal-about|
 2. Installation                            |libmodal-installation|
 3. Usage                                   |libmodal-usage|
 4. Configuration                           |libmodal-configuration|
+
+
+============================================================================
+1. About                                          *libmodal-about*
+
+|vim-libmodal|:
+- Author, Iron-E @ https://github.com/Iron-E & https://gitlab.com/Iron-E
+- GitHub @ https://github.com/Iron-E/vim-libmodal
+
+Forked from |vim-win|:
+- Author, Daniel Steinberg @ https://www.dannyadam.com
+- GitHub @ https://github.com/dstein64/vim-win
 
 |libmodal| is a Neo/vim library/plugin aimed at simplifying the creation
 of new "modes" (e.g. Insert, Normal). The entrance of modes is
@@ -20,17 +27,9 @@ modes is also user-defined, and is outlined in |libmodal-usage|.
 See: |vim-modes|
 
 ============================================================================
-1. Requirements                            *libmodal-requirements*
-
-* `vim>=8.2` or `nvim>=0.4.0`
-
-============================================================================
 2. Installation                            *libmodal-installation*
 
 Use |packages| or one of the various package managers.
-
-Package Managers ~
-                                                 *libmodal-package-managers*
 
 Manager    Command
 -------    -------
@@ -41,6 +40,8 @@ Vundle     `Plugin 'https://github.com/Iron-E/vim-libmodal'`
 
 ============================================================================
 3. Usage                                   *libmodal-usage*
+
+Commands ~
                                                             *libmodal#Enter*
 
 |libmodal#Enter| takes three parameters. These parameters are not formally named
@@ -53,9 +54,32 @@ Arg            Index Use
 `modeName`     0     The name for the mode when prompting the user.
 `modeCallback` 1     The function used to control the mode.
 `modeCombos`   1     A dictionary of |libmodal-key-combinations|.
-`supressExit`  2     A flag to enable |libmodal-supressing-exit|.
+`supressExit`  2     A flag to enable |libmodal-exit-supression|.
 
-Note that either `modeCallback` OR `modeCombos` may be specified, not both.
+- Note that either `modeCallback` OR `modeCombos` may be specified, not both.
+
+                                                           *libmodal#Prompt*
+
+|libmodal#Prompt| takes two parameters. These parameters are not formally named
+by the editor (as |libmodal#Prompt| is declared `libmodal#Prompt(`|...|`)` ).
+However, the names of these parameters will be used throughout the document to
+describe the index of the parameter (see |E740|).
+
+Arg            Index Use
+---            ----- ---
+`modeName`     0     The name for the mode when prompting the user.
+`modeCallback` 1     The function used to control the mode.
+`modeCommands` 1     A dictionary of commands→strings to execute.
+`commandList`  2     A list of the commands in a `modeCallback`.
+
+- Note that either `modeCallback` OR `modeCommands` may be specified, not both.
+- Note that `commandList` is an optional parameter.
+  - It is used as a completion source for when `modeCallback` is specified.
+  - Additionally, `commandList` is IGNORED when `modeCommands` is specified
+	since completions can be created from the dictionary keys.
+  - If `commandList` is not specified when `modeCallback` is, no completions
+	will be provided for the prompt.
+
 
 Receiving Input ~
                                                   *libmodal-receiving-input*
@@ -70,21 +94,6 @@ receiving said input. The variable is generated as follows:
 
 For example, if `modeName` is 'FOO', then the variable that is created is
 `g:fooModeInput`.
-
-Supressing Exit ~
-                                                  *libmodal-supressing-exit*
-
-When the `supressExit` parameter is specified, |libmodal#Enter| will ignore
-`<Esc>` presses and instead listen for changes to a unique variable created
-for the specific purpose of exiting the mode. The variable is generated as
-follows:
-
->
-	let g:{tolower(a:modeName)}ModeExit = 0
-<
-
-When this variable becomes set to `1`, the mode will exit the next time that
-the `modeCallback` function returns.
 
 Creating Modes ~
                                                    *libmodal-creating-modes*
@@ -113,10 +122,9 @@ mode. Be sure to use `<expr>`. Example:
 	nnoremap <expr> <leader>n FooModeEnter
 <
 
-Note the `funcref()` call. It must be there or else `libmodal#Enter` won't
-execute properly.
+- Note the `funcref()` call. It must be there or else `libmodal#Enter` won't
+  execute properly.
 
-Key Combinations ~
                                                  *libmodal-key-combinations*
 
 While normally |libmodal| dictates that a user should define their own
@@ -130,8 +138,8 @@ receive input for themselves. Despite this, the unique variable (see
 |libmodal-receiving-input|) is still updated, and you can create a listener
 for it just like for any other variable.
 
-Note that one may still supress exit (see |libmodal-supressing-exit|) while
-defining key combinations.
+- Note that |libmodal-exit-supression| is still compatable with defining
+  key combinations.
 
 Here is an example that shows how to create a dictionary that defines the
 following actions:
@@ -174,28 +182,28 @@ part of the mode. Because of this method, modes with mappings that have
 similar beginnings are more efficient, and modes with more mappings get more
 benefit from the quick tree-like traversal.
 
-Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon
-entrance, so changes to the mapping dictionary that may occur while in a mode
-are not reflected until the mode is entered again and the dictionary is
-re-parsed.
+- Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon
+  entrance.
+  - Changes to the mapping dictionary that may occur while in a mode
+    are not reflected until the mode is entered again and the dictionary is
+    re-parsed.
 
-Prompts ~
-                                                           *libmodal#Prompt*
+                                                  *libmodal-exit-supression*
 
-|libmodal#Prompt| takes two parameters. These parameters are not formally named
-by the editor (as |libmodal#Prompt| is declared `libmodal#Prompt(`|...|`)` ).
-However, the names of these parameters will be used throughout the document to
-describe the index of the parameter (see |E740|).
+When the `supressExit` parameter is specified, |libmodal#Enter| will ignore
+`<Esc>` presses and instead listen for changes to a unique variable created
+for the specific purpose of exiting the mode. The variable is generated as
+follows:
 
-Arg            Index Use
----            ----- ---
-`modeName`     0     The name for the mode when prompting the user.
-`modeCallback` 1     The function used to control the mode.
-`modeCommands` 1     A dictionary of commands→strings to execute.
+>
+	let g:{tolower(a:modeName)}ModeExit = 0
+<
 
-Note that either `modeCallback` OR `modeCommands` may be specified, not both.
+When this variable becomes set to `1`, the mode will exit the next time that
+the `modeCallback` function returns.
 
-                                                          *libmodal-prompts*
+Creating Prompts ~
+                                                 *libmodal-creating-prompts*
 
 Besides accepting user input like keys in |Normal-mode|, |libmodal| is also
 capable of prompting the user for input like |Cmdline-mode|. To define a
@@ -212,30 +220,37 @@ the dictionary. See an example of this below:
 	\}
 <
 
-An equivalent to the above using a `modeCalback` would be:
+When `modeCallback` is specified, completions must be provided separately.
+An equivalent to the above using a `modeCallback` would be:
 
 >
+	" Define callback
 	function! s:BarMode() abort
 		if g:barModeInput ==# 'new'
 			execute 'tabnew'
-		elseif g:barModeInput ==# 'tabclose'
+		elseif g:barModeInput ==# 'close'
 			execute 'tabclose'
-		elseif g:barModeInput ==# 'tablast'
+		elseif g:barModeInput ==# 'last'
 			execute 'tablast'
 		endif
 	endfunction
+
+	" Define completion list
+	let s:barModeCommandList = ['new', 'close', 'last']
 <
 
 You can then enter the mode using one of the following commands (depending on
 whether or not you used a dictionary or a callback):
 
 >
+	" Command dict
 	call libmodal#Prompt('BAR', s:barModeCommands)
-	call libmodal#Prompt('BAR', funcref('s:BarMode'))
+	" Callback + completion list
+	call libmodal#Prompt('BAR', funcref('s:BarMode'), s:barModeCommandList)
 <
 
-Note that if you want to create commands with arguments, you will need to use
-a callback.
+- Note that if you want to create commands with arguments, you will need to
+  use a callback.
 
 Submodes ~
                                                          *libmodal-submodes*

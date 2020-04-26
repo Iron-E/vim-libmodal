@@ -399,6 +399,8 @@ function! libmodal#Prompt(...) abort
 
 	if type(a:2) == v:t_dict
 		let l:completions = keys(a:2)
+	elseif len(a:000) > 2
+		let l:completions = a:3
 	endif
 
 	" Outer loop to keep accepting commands
@@ -413,13 +415,13 @@ function! libmodal#Prompt(...) abort
 		" Prompt the user.
 		let g:{l:input} = ''
 
-		" Prompt the user without completions if a callback is registered.
-		if type(a:2) == v:t_func | let g:{l:input} = input( l:indicator, '' )
-
 		" Prompt the user and use completions from the command dictionary.
-		elseif exists('l:completions')
+		if exists('l:completsion')
 			let s:completions = l:completions
-			let g:{l:input} = input( l:indicator, '', 'customlist,libmodal#complete')
+			let g:{l:input} = input(l:indicator, '', 'customlist,libmodal#complete')
+
+		" Prompt the user without completions if a callback is registered.
+		else | let g:{l:input} = input(l:indicator, '')
 		endif
 
 		" if a:2 is a function then call it.

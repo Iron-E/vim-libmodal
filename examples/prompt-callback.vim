@@ -4,6 +4,8 @@ let s:commands = {
 \	'last': 'tablast'
 \}
 
+let s:commandList = ['new', 'close', 'last']
+
 function! s:BarMode() abort
 	if g:tabModeInput ==# 'new'
 		execute 'tabnew'
@@ -14,4 +16,4 @@ function! s:BarMode() abort
 	endif
 endfunction
 
-call libmodal#Prompt('TAB', funcref('s:BarMode'))
+call libmodal#Prompt('TAB', funcref('s:BarMode'), s:commandList)

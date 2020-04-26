@@ -1,9 +1,3 @@
-let s:commands = {
-\	'new': 'tabnew',
-\	'close': 'tabclose',
-\	'last': 'tablast'
-\}
-
 let s:commandList = ['new', 'close', 'last']
 
 function! s:BarMode() abort

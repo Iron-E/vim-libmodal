@@ -12,7 +12,7 @@
 1. About                                          *libmodal-about*
 
 |vim-libmodal|:
-- Author, Iron-E @ https://github.com/Iron-E & https://gitlab.com/Iron-E
+- Author, Iron-E @ https://github.com/Iron-E & https://gitlab.com/Iron_E
 - GitHub @ https://github.com/Iron-E/vim-libmodal
 
 Forked from |vim-win|:
@@ -84,9 +84,10 @@ Arg            Index Use
 Receiving Input ~
                                                   *libmodal-receiving-input*
 
-When a user of |libmodal| calls |libmodal#Enter|, the `modeName` parameter is
-used to generate a unique global variable for the specific purpose of
-receiving said input. The variable is generated as follows:
+When a user of |libmodal| calls |libmodal#Enter| or |libmodal#Prompt|, the
+`modeName` parameter is used to generate a unique global variable for the
+specific purpose of receiving said input. The variable is generated as
+follows:
 
 >
 	let g:{tolower(a:modeName)}ModeInput = …

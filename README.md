@@ -1,43 +1,65 @@
-# Description
+# About
 
-* __Forked From:__ [vim-win](https://github.com/dstein64/vim-win)
-* __Original Author:__ [Daniel Steinberg](https://www.dannyadam.com)
+`vim-libmodal`:
 
-`vim-libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal).
+- Author: Iron-E
+	- [GitHub](https://github.com/Iron-E)
+	- [GitLab](https://gitlab.com/Iron_E)
 
-The entrance of modes is user-defined, and their exit defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in the documentation.
+Forked from [`vim-win`](https://github.com/dstein64/vim-win):
+
+- Author: [Daniel Steinberg](https://www.dannyadam.com)
+
+`libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal). The entrance of modes is user-defined, and their exit defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in `libmodal-usage`.
 
 # Installation
 
-Use `packadd` or one of the many package managers:
+Use the built-in package manager or one of the various package managers.
 
 | Manager   | Command                                                   |
-|:---------:|:---------------------------------------------------------|
-| dein.vim  | `call dein#add('https://github.com/Iron_E/vim-libmodal')` |
-| NeoBundle | `NeoBundle 'https://github.com/Iron_E/vim-libmodal'`      |
-| Vim-Plug  | `Plug 'https://github.com/Iron_E/vim-libmodal'`           |
-| Vundle    | `Plugin 'https://github.com/Iron_E/vim-libmodal'`         |
+|:----------|:----------------------------------------------------------|
+| dein.vim  | `call dein#add('https://github.com/Iron-E/vim-libmodal')` |
+| NeoBundle | `NeoBundle 'https://github.com/Iron-E/vim-libmodal'`      |
+| Vim-Plug  | `Plug 'https://github.com/Iron-E/vim-libmodal'`           |
+| Vundle    | `Plugin 'https://github.com/Iron-E/vim-libmodal'`         |
 
 # Usage
 
-For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://github.com/Iron-E/vim-tabmode).
+## Commands
 
-## `libmodal#Enter`
+### `libmodal#Enter`
 
-`libmodal#Enter` takes two arguments: `modeName` and `modeCallback`.
+`libmodal#Enter` takes three parameters. These parameters are not formally named by the editor (as `libmodal#Enter` is declared `libmodal#Enter(...)` ). However, the names of these parameters will be used throughout the document to describe the index of the parameter (see `E740`).
 
 | Arg            | Index | Use                                            |
-|:--------------:|:-----:|:-----------------------------------------------|
+|:---------------|:-----:|:-----------------------------------------------|
 | `modeName`     | 0     | The name for the mode when prompting the user. |
 | `modeCallback` | 1     | The function used to control the mode.         |
-| `modeCombos`   | 1     | A dictionary of key combos.                    |
-| `supressExit`  | 2     | Whether or not to leave the mode on (`<Esc>`). |
+| `modeCombos`   | 1     | A dictionary of `libmodal-key-combinations`.   |
+| `supressExit`  | 2     | A flag to enable `libmodal-exit-supression`.   |
 
-Note that either `modeCallback` OR `modeCombos` may be specified, not both.
+- Note that _either_ `modeCallback` _or_ `modeCombos` may be specified, __not both__.
+
+### `libmodal#Prompt`
+
+`libmodal#Prompt` takes two parameters. These parameters are not formally named by the editor (as `libmodal#Prompt` is declared `libmodal#Prompt(...)` ). However, the names of these parameters will be used throughout the document to describe the index of the parameter (see `E740`).
+
+| Arg            | Index | Use                                            |
+|:---------------|:-----:|:-----------------------------------------------|
+| `modeName`     | 0     | The name for the mode when prompting the user. |
+| `modeCallback` | 1     | The function used to control the mode.         |
+| `modeCommands` | 1     | A dictionary of commands→strings to execute.   |
+| `commandList`  | 2     | A list of the commands in a `modeCallback`.    |
+
+- Note that either `modeCallback` OR `modeCommands` may be specified, not both.
+- Note that `commandList` is an optional parameter.
+	- It is used as a completion source for when `modeCallback` is specified.
+	- Additionally, `commandList` is IGNORED when `modeCommands` is specified since completions can be created from the dictionary keys.
+	- If `commandList` is not specified when `modeCallback` is, no completions will be provided for the prompt.
 
 ## Receiving Input
 
-When a user of `libmodal` calls `libmodal#Enter`, the `modeName` parameter is used to generate a __unique global variable__ for the specific purpose of receiving said input. The variable is generated as follows:
+When a user of `libmodal` calls `libmodal#Enter` or `libmodal#Prompt`, the `modeName` parameter is used to generate a unique global variable for the specific purpose of receiving said input. The variable is generated as follows:
 
 ```viml
 let g:{tolower(a:modeName)}ModeInput = …
@@ -46,6 +68,8 @@ let g:{tolower(a:modeName)}ModeInput = …
 For example, if `modeName` is 'FOO', then the variable that is created is `g:fooModeInput`.
 
 ## Creating Modes
+
+For an example of a plugin that uses `vim-libmodal`, see [vim-tabmode](https://github.com/Iron-E/vim-tabmode).
 
 To define a new mode, you must first create a function to pass into `libmodal#Enter`. Example:
 
@@ -66,25 +90,15 @@ command! FooModeEnter call libmodal#Enter('FOO', funcref('s:FooMode'))
 nnoremap <expr> <leader>n FooModeEnter
 ```
 
-__Note the `funcref`__. It is important that it be present, else the call to `libmodal#Enter` will fail.
+- Note the `funcref()` call. It must be there or else `libmodal#Enter` won't execute properly.
 
-## Supressing Exit
-
-When the `supressExit` parameter is specified, `libmodal#Enter` will ignore `<Esc>` presses and instead listen for changes to a unique variable created for the specific purpose of exiting the mode.
-
-The variable is generated as follows:
-
-```viml
-let g:{tolower(a:modeName)}ModeExit = 0
-```
-
-When this variable becomes set to `1`, the mode will exit the next time that the `modeCallback` function returns.
-
-## Key Combinations
+### Key Combinations
 
 While normally `libmodal` dictates that a user should define their own function for controlling a mode, there is a way to specify key combinations. If the second argument is set to a `modeCombos` dictionary, `libmodal#Enter` will automatically detect the caller's intent and pass control over to an auxilliary function built to handle pre-defined combos.
 
-When providing `modeCombos`, it is important to note that one no longer has to receive input for themselves. Despite this, the unique variable (see `libmodal-receiving-input`) is still updated, and you can create a listener for it just like for any other variable. Note that one may still supress exit (see `libmodal-supressing-exit`) while defining key combinations.
+When providing `modeCombos`, it is important to note that one no longer has to receive input for themselves. Despite this, the unique variable (see `libmodal-receiving-input`) is still updated, and you can create a listener for it just like for any other variable.
+
+- Note that |libmodal-exit-supression| is still compatable with defining key combinations.
 
 Here is an example that shows how to create a dictionary that defines the following actions:
 
@@ -106,33 +120,79 @@ And then to enter that mode, you can call:
 call libmodal#Enter('BAR', s:barModeCombos)
 ```
 
-`libmodal`'s internal processing of that dictionary becomes more useful the larger the dictionary is. Internally, `s:barModeCombos` is rendered into a tree-like structure that looks like this:
+`libmodal`'s internal processing of that dictionary becomes more useful the larger the dictionary is. Internally, `s:barModeCombos` is rendered into a dictionary that looks like this:
 
 ![Internal Tree Structure](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVEJcbnp7en0gLS0-IGZ7Zn1cbmYgLS0-IGN7Y31cbmYgLS0-IG97b31cblxuYyAtLT4gZWNob1tcImVjaG9tICZxdW90O0l0IHdvcmtzISZxdW90O1wiXVxubyAtLT4gdGFibmV3IiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0 "Internal Tree Structure")
 
 This allows `libmodal` to quickly determine which mappings are and are not part of the mode. Because of this method, modes with mappings that have similar beginnings are more efficient, and modes with more mappings get more benefit from the quick tree-like traversal.
 
-Note that `libmodal#Enter` will only parse a `modeCombos` dict once upon entrance, so changes to the mapping dictionary that may occur while in a mode are not reflected until the mode is entered again and the dictionary is re-parsed.
+- Note that |libmodal#Enter| will only parse a `modeCombos` dict once upon entrance.
+	- Changes to the mapping dictionary that may occur while in a mode are not reflected until the mode is entered again and the dictionary is re-parsed.
 
-## Submodes
+### Exit Supression
 
-`libmodal` has built-in support for entering additional modes while already in a `libmodal` mode.
-
-To enter another mode, one must only call `libmodal#Enter` from within a `modeCallback`. Additionally, when a user presses `<Esc>` they will automatically be taken back to the mode that they were previously inside of.
-
-To display this feature, one may alter the `echom 'It works!'` line from the above example, and change it to the following:
+When the `supressExit` parameter is specified, `libmodal#Enter` will ignore `<Esc>` presses and instead listen for changes to a unique variable created for the specific purpose of exiting the mode. The variable is generated as follows:
 
 ```viml
-call libmodal#Enter('BAR2', funcref('s:BarMode'))
+let g:{tolower(a:modeName)}ModeExit = 0
 ```
 
-This will trigger `libmodal#Enter` to start a new mode called 'BAR2'. When the user presses `<Esc>`, they will automatically be returned to 'BAR'.
+When this variable becomes set to `1`, the mode will exit the next time that the `modeCallback` function returns.
+
+## Creating Prompts
+
+Besides accepting user input like keys in `Normal-mode`, `libmodal` is also capable of prompting the user for input like `Cmdline-mode`. To define a `Cmdline-mode`-like prompt, use `libmodal#Prompt` rather than `libmodal#Enter`.
+
+When `modeCommands` is specified, completions are provided for every key in the dictionary. See an example of this below:
+
+```viml
+let s:barModeCommands = {
+\	'new': 'tabnew',
+\	'close': 'tabclose',
+\	'last': 'tablast'
+\}
+```
+
+When `modeCallback` is specified, completions must be provided separately.  An equivalent to the above using a `modeCallback` would be:
+
+```viml
+" Define callback
+function! s:BarMode() abort
+	if g:barModeInput ==# 'new'
+		execute 'tabnew'
+	elseif g:barModeInput ==# 'close'
+		execute 'tabclose'
+	elseif g:barModeInput ==# 'last'
+		execute 'tablast'
+	endif
+endfunction
+
+" Define completion list
+let s:barModeCommandList = ['new', 'close', 'last']
+```
+
+You can then enter the mode using one of the following commands (depending on whether or not you used a dictionary or a callback):
+
+```viml
+" Command dict
+call libmodal#Prompt('BAR', s:barModeCommands)
+" Callback + completion list
+call libmodal#Prompt('BAR', funcref('s:BarMode'), s:barModeCommandList)
+```
+
+- Note that if you want to create commands with arguments, you will need to use a callback.
+
+# Submodes
+
+`libmodal` has built-in support for entering additional modes while already in a `libmodal` mode. To enter another mode, one must only call `libmodal#Enter` from within a `modeCallback`. Additionally, when a user presses `<Esc>` they will automatically be taken back to the mode that they were previously inside of.
+
+To display this feature, one view the [submode example](./examples/submodes.vim).
 
 # Configuration
 
-The following highlight groups can be configured to change the mode's colors:
+The following highlight groups can be configured to change a mode's colors:
 
 | Name             | Default      | Description                         |
-|:----------------:|:------------:|:-----------------------------------|
+|:-----------------|:-------------|:------------------------------------|
 | `LibmodalPrompt` | `ModeMsg`    | Color for the mode text.            |
 | `LibmodalStar`   | `StatusLine` | Color for the `*` at the beginning. |

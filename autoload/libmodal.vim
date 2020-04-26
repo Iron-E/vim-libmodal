@@ -11,8 +11,12 @@ let s:TRUE = 1
 
 " SUMMARY:
 " Make vim beep at the user.
-function! s:Beep()
+function! s:Beep() abort
 	execute "normal \<Esc>"
+endfunction
+
+function! s:ClearLocalInput(modeName) abort
+	let s:{a:modeName}ModeInput = ''
 endfunction
 
 " SUMMARY:
@@ -23,7 +27,7 @@ endfunction
 " RETURNS:
 " * `0` => `list` does not contain `element`.
 " * `1` => `list` contains `element`.
-function! s:Contains(list, element)
+function! s:Contains(list, element) abort
 	return index(a:list, a:element) !=# -1
 endfunction
 
@@ -32,7 +36,7 @@ endfunction
 "   and a corresponding string to echo.
 " PARAMS:
 " * `echo_list` => the list of strings to echo.
-function! s:Echo(echo_list)
+function! s:Echo(echo_list) abort
 	mode
 	for [l:hlgroup, l:string] in a:echo_list
 		execute 'echohl ' . l:hlgroup . ' | echon "' . l:string . '"'
@@ -137,6 +141,11 @@ endfunction
 " * `0` => the calling function should break.
 " * `1` => the calling function should continue.
 function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
+	if exists('s:' . a:modeName . 'ModeTimeout')
+		call timer_stop(s:{a:modeName}ModeTimeout)
+		unlet s:{a:modeName}ModeTimeout
+	endif
+
 	" Initialize variables necessary to execute combo modes.
 	if !exists('s:' . a:modeName . 'ModeCombos')
 
@@ -149,7 +158,7 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		endfor
 
 		" Initialize the input history variable.
-		let s:{a:modeName}ModeInput = ''
+		call s:ClearLocalInput(a:modeName)
 	endif
 
 	" Append latest input to history.
@@ -160,13 +169,21 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Read the 'RETURNS' section of `s:Get()`.
 	if type(l:command) == v:t_number
-		if l:command < 0 | let l:clearInput = 1 | endif
+		" The command is nowhere in the combo dict.
+		if l:command < 0
+			let l:clearInput = 1
+		" The command MAY be somewhere in the combo dict.
+		else
+			let s{a:modeName}ModeTimeout = timer_start(
+			\	&timeoutlen, {_ -> function('s:ClearLocalInput', [a:modeName])}
+			\)
+		endif
 	else
 		execute l:command
 		let l:clearInput = 1
 	endif
 
-	if exists('l:clearInput') | let s:{a:modeName}ModeInput = '' | endif
+	if exists('l:clearInput') | call s:ClearLocalInput(a:modeName) | endif
 endfunction
 
 " SUMMARY:

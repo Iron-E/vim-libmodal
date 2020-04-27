@@ -2,6 +2,7 @@ let s:FALSE = 0
 let s:completions = []
 let s:replacements = ['\.', ':', '(', ')', '{', '}', '[', ']', '+', '\*', '&', '\^', '%', '\$', ',', '@', '\!', '/', '?', '>', '<', '\\', '=']
 let s:TRUE = 1
+let s:EX_KEY = char2nr('')
 
 " #  ____       _            _
 " # |  _ \ _ __(_)_   ____ _| |_ ___
@@ -44,6 +45,7 @@ function! s:Echo(echo_list) abort
 	echohl None
 endfunction
 
+
 " SUMMARY:
 " Get a state that can be used for restoration.
 " RETURNS:
@@ -84,21 +86,26 @@ endfunction
 " * `0` => `comboString` partially describes a combo in `comboDict.`
 function! s:Get(comboDict, comboString) abort
 	" Get the next character in the combo string.
-	let l:comboChar = a:comboString[0]
+	let l:comboChar = char2nr(a:comboString[0])
 
 	" Make sure the dicitonary has a key for that value.
 	if has_key(a:comboDict, l:comboChar)
 		let l:valType = type(a:comboDict[l:comboChar])
 
-		if  l:valType == v:t_dict
-			return s:Get(
-			\	a:comboDict[l:comboChar], a:comboString[1:]
-			\)
+		if l:valType == v:t_dict
+			if has_key(a:comboDict, s:EX_KEY)
+				return a:comboDict
+			else
+				return s:Get(
+				\	a:comboDict[l:comboChar], a:comboString[1:]
+				\)
+			endif
 		elseif l:valType == v:t_string && len(a:comboString) <= 1
 			return a:comboDict[l:comboChar]
 		endif
+	" The user input has run out, but there is more in the dictionary.
 	elseif a:comboString == ''
-		return 0
+		return a:comboDict
 	endif
 	return -1
 endfunction
@@ -141,14 +148,16 @@ endfunction
 " * `0` => the calling function should break.
 " * `1` => the calling function should continue.
 function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
+
+	" Stop timers that would clear user input.
 	if exists('s:' . a:modeName . 'ModeTimer')
+
 		call timer_stop(s:{a:modeName}ModeTimer)
 		unlet s:{a:modeName}ModeTimer
 	endif
 
 	" Initialize variables necessary to execute combo modes.
 	if !exists('s:' . a:modeName . 'ModeCombos')
-
 		" Build a pseudo-parse-tree.
 		let s:{a:modeName}ModeCombos = {}
 		for l:splitCombos in s:SplitArgDict(a:modeCombos)
@@ -166,25 +175,50 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Try to grab the command for the input.
 	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
+	let l:typeof = type(l:command)
 
-	" Read the 'RETURNS' section of `s:Get()`.
-	if type(l:command) == v:t_number
-		" The command is nowhere in the combo dict.
-		if l:command < 0
-			let l:clearInput = 1
-		" The command MAY be somewhere in the combo dict AND timeouts are enabled.
-		elseif s:True(s:{a:modeName}ModeTimeout)
-			let s{a:modeName}ModeTimer = timer_start(
-			\	&timeoutlen, {_ -> function('s:ClearLocalInput', [a:modeName])}
-			\)
+	" The command is nowhere in the combo dict.
+	if l:typeof == v:t_number
+
+		let l:clearInput = 1
+
+	" The command MAY be somewhere in the combo dict.
+	elseif l:typeof == v:t_dict
+
+		" If timers are on.
+		if s:True(s:{a:modeName}ModeTimeout)
+
+			let l:clearFunc = function('s:ClearLocalInput', [a:modeName])
+
+			" There is a command for this entry.
+			if has_key(l:command, s:EX_KEY)
+
+				" Start a timer to execute user input and then clear the input history.
+				let s{a:modeName}ModeTimer = timer_start(
+				\	&timeoutlen, {
+				\		_ -> execute(l:command . ' | call ' . l:clearFunc)
+				\	}
+				\)
+
+			else
+
+				" Start a timer to clear the user's input.
+				let s{a:modeName}ModeTimer = timer_start(
+				\	&timeoutlen, {_ -> l:clearFunc}
+				\)
+			endif
 		endif
+
 	else
+
 		execute l:command
 		let l:clearInput = 1
 	endif
 
 	if exists('l:clearInput')
+
 		call s:ClearLocalInput(a:modeName)
+
 	endif
 endfunction
 
@@ -212,16 +246,24 @@ endfunction
 " <
 " That defines a command for `kj` that echoes "Hello".
 function! s:NewComboDict(comboDict, splitCombos, keyCommand) abort
-	let l:comboChar = remove(a:splitCombos, 0)
+	let l:comboChar = char2nr(remove(a:splitCombos, 0))
 
 	if len(a:splitCombos) > 0
 		if !has_key(a:comboDict, l:comboChar)
 			let a:comboDict[l:comboChar] = {}
+		" If there is a previous command mapping in place
+		elseif type(a:comboDict[l:comboChar]) == v:t_string
+			" Swap the mapping to an s:EX_KEY.
+			let a:comboDict[l:comboChar] = {
+			\	string(s:EX_KEY): a:comboDict[l:comboChar]
+			\}
 		endif
 
 		let a:comboDict[l:comboChar] = s:NewComboDict(
 		\	a:comboDict[l:comboChar], a:splitCombos, a:keyCommand
 		\)
+	elseif has_key(a:comboDict, l:comboChar)
+		let a:comboDict[l:comboChar][s:EX_KEY] = a:keyCommand
 	else
 		let a:comboDict[l:comboChar] = a:keyCommand
 	endif

@@ -9,6 +9,7 @@ libmodal#Prompt	libmodal.txt	/*libmodal#Prompt*
 libmodal-receiving-input	libmodal.txt	/*libmodal-receiving-input*
 libmodal-creating-modes	libmodal.txt	/*libmodal-creating-modes*
 libmodal-key-combinations	libmodal.txt	/*libmodal-key-combinations*
+libmodal-timeouts	libmodal.txt	/*libmodal-timeouts*
 libmodal-exit-supression	libmodal.txt	/*libmodal-exit-supression*
 libmodal-creating-prompts	libmodal.txt	/*libmodal-creating-prompts*
 libmodal-submodes	libmodal.txt	/*libmodal-submodes*

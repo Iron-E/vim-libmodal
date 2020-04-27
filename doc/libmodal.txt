@@ -197,31 +197,35 @@ the use of Vim's built-in |timeout| feature. Unlike other options which are
 specified by passing arguments to |libmodal#Enter|, this feature is enabled
 through a |variable|.
 
-The reasoning for this is that the use of timeouts is primarily chosen by the
+The reasoning for this is that the use of |timeout|s is primarily chosen by the
 user of a mode, rather than the creator (whereas other features like
 |libmodal-exit-supression| are largely creator-oriented).
 
-To enable timeouts, one may set the following |variables|:
+To enable |timeout|s, one may set the following |variables|:
 
 >
-	" Global enable of timeouts.
+	" Set libmodal modes to turn timeouts on.
 	let g:libmodalTimeouts = 1
-	" Enable of timeouts for specific mode.
+	" Enable timeouts for specific mode.
 	let g:{modeName}ModeTimeout = 1
 <
 
-Similarly, to disable them, one may set choose to simply |unlet| the
-|variables| (or set them to `0`, if that is preferred).
+Similarly, to disable them, one may set them to `0`.
 
+- NOTE: If not specified by the user, `g:libmodalTimeouts` automatically
+        references the |timeout| on/off value.
 - NOTE: The `g:limbodalTimeouts` variable should NOT be defined by plugins.
         - Allow users to decide whether or not they want timeouts to be
           enabled globally by themselves.
 - NOTE: Mode-specific timeout variables will override `g:libmodalTimeouts`.
         - This is so a default may be set but overridden.
 
-Enabling |libmodal-timeouts| will reference the mode user's |timeoutlen| as
-specified in their |config|. Mode creators may change |timeoutlen| upon
-entrance of a mode, and then reset it upon exit. Example:
+When enabled, |libmodal-timeouts| will reference the mode user's |timeoutlen|
+as specified in their |config|. This way, modes will feel consistent to users
+by default.
+
+However, mode creators may change |timeoutlen| upon entrance of a mode, and
+then reset it upon exit. Example:
 
 >
 	function! s:BarMode() abort

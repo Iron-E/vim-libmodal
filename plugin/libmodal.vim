@@ -3,6 +3,10 @@ if exists('g:loaded_libmodal')
 endif
 let g:loaded_libmodal = 1
 
+if !exists('g:libmodalTimeouts')
+	let g:libmodalTimeouts = 0
+endif
+
 " ************************************************************
 " * User Configuration
 " ************************************************************

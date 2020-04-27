@@ -403,10 +403,8 @@ function! libmodal#Enter(...) abort
 
 		if exists('g:' . l:lower . 'ModeTimeout')
 			let l:timeout = g:{l:lower}ModeTimeout
-		elseif exists('g:libmodalTimeouts')
-			let l:timeout = g:libmodalTimeouts
 		else
-			let l:timeout = 0
+			let l:timeout = g:libmodalTimeouts
 		endif
 
 		let s:{l:lower}ModeTimeout = l:timeout

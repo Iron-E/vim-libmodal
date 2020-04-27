@@ -151,27 +151,18 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Stop timers that would clear user input.
 	if exists('s:' . a:modeName . 'ModeTimer')
-
+		if timer_info(s:{a:modeName}ModeTimer) != []
+			echom 'Stopping timer.'
+		endif
 		call timer_stop(s:{a:modeName}ModeTimer)
 		unlet s:{a:modeName}ModeTimer
-	endif
-
-	" Initialize variables necessary to execute combo modes.
-	if !exists('s:' . a:modeName . 'ModeCombos')
-		" Build a pseudo-parse-tree.
-		let s:{a:modeName}ModeCombos = {}
-		for l:splitCombos in s:SplitArgDict(a:modeCombos)
-			let s:{a:modeName}ModeCombos = s:NewComboDict(
-			\	s:{a:modeName}ModeCombos, l:splitCombos, a:modeCombos[join(l:splitCombos, '')]
-			\)
-		endfor
-
-		" Initialize the input history variable.
-		call s:ClearLocalInput(a:modeName)
+	else
+		echom "IT DOESN'T EXIST???????? >>>>>> s:" . a:modeName . "ModeTimer"
 	endif
 
 	" Append latest input to history.
 	let s:{a:modeName}ModeInput .= g:{a:modeName}ModeInput
+	echom 'CURRENT INPUT IS ' . s:{a:modeName}ModeInput
 
 	" Try to grab the command for the input.
 	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
@@ -188,23 +179,27 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		" If timers are on.
 		if s:True(s:{a:modeName}ModeTimeout)
 
-			let l:clearFunc = function('s:ClearLocalInput', [a:modeName])
+			let l:ClearFunc = function('s:ClearLocalInput', [a:modeName])
 
 			" There is a command for this entry.
 			if has_key(l:command, s:EX_KEY)
+				" Get the command that was embedded into the '' key.
+				let l:command = l:command[s:EX_KEY]
 
 				" Start a timer to execute user input and then clear the input history.
-				let s{a:modeName}ModeTimer = timer_start(
+				echom 'Starting s:' . a:modeName .  'ModeTimer to execute command: ' . string(l:command)
+				let s:{a:modeName}ModeTimer = timer_start(
 				\	&timeoutlen, {
-				\		_ -> execute(l:command . ' | call ' . l:clearFunc)
+				\		_ -> execute([l:command, 'call ' . l:ClearFunc])
 				\	}
 				\)
 
 			else
 
 				" Start a timer to clear the user's input.
-				let s{a:modeName}ModeTimer = timer_start(
-				\	&timeoutlen, {_ -> l:clearFunc}
+				echom 'Starting s:' . a:modeName .  'ModeTimer to clear input.'
+				let s:{a:modeName}ModeTimer = timer_start(
+				\	&timeoutlen, {_ -> execute(['echom "Timer ran out. clearning."', 'call ' . l:ClearFunc])}
 				\)
 			endif
 		endif
@@ -396,9 +391,7 @@ function! libmodal#complete(...) abort
 
 	let l:completions = []
 	for l:completion in s:completions
-		echom 'TESTING >>' l:completion
 		if stridx(l:completion, l:word) > -1
-			echom '<< ACCEPTED'
 			let l:completions = add(l:completions, l:completion)
 		endif
 	endfor
@@ -415,22 +408,27 @@ endfunction
 " * `a:3` => `supressExit`
 function! libmodal#Enter(...) abort
 	" Define mode indicator
+	unlockvar l:indicator
 	let l:indicator = s:NewIndicator(a:1)
 	lockvar l:indicator
 
 	" Initialize the window state for the mode.
+	unlockvar l:winState
 	let l:winState = s:Init()
 	lockvar l:winState
 
 	" Convert the modename to lowercase.
+	unlockvar l:lower
 	let l:lower = tolower(a:1)
 	lockvar l:lower
 
 	" Name of variable used for input.
+	unlockvar l:input
 	let l:input = l:lower . "ModeInput"
 	lockvar l:input
 
 	" If the third argument, representing exit supression, has been passed.
+	unlockvar l:exit
 	if len(a:000) > 2 && s:True(a:3)
 		" Create the variable used to control the exit.
 		let l:exit = l:lower . "ModeExit"
@@ -438,7 +436,6 @@ function! libmodal#Enter(...) abort
 	else
 		let l:exit = 0
 	endif
-
 	lockvar l:exit
 
 	if type(a:2) == v:t_dict
@@ -449,8 +446,25 @@ function! libmodal#Enter(...) abort
 			let l:timeout = g:libmodalTimeouts
 		endif
 
+		unlockvar s:{l:lower}ModeTimeout
 		let s:{l:lower}ModeTimeout = l:timeout
 		lockvar s:{l:lower}ModeTimeout
+
+		echom 'l:timeout >>> ' . string(s:{l:lower}ModeTimeout)
+		echom 's:' . l:lower . 'ModeTimeout >>> ' . string(s:{l:lower}ModeTimeout)
+
+		" Build a pseudo-parse-tree.
+		let s:{l:lower}ModeCombos = {}
+		for l:splitCombos in s:SplitArgDict(a:2)
+			let s:{l:lower}ModeCombos = s:NewComboDict(
+			\	s:{l:lower}ModeCombos, l:splitCombos, a:2[join(l:splitCombos, '')]
+			\)
+		endfor
+
+		echom 'COMBOS >>> ' . string(s:{l:lower}ModeCombos)
+
+		" Initialize the input history variable.
+		call s:ClearLocalInput(l:lower)
 
 	endif
 
@@ -473,9 +487,12 @@ function! libmodal#Enter(...) abort
 			break
 		endif
 
-		if type(a:2) == v:t_func | call a:2()
-		elseif type(a:2) == v:t_dict | call s:LibmodalEnterWithCombos(l:lower, a:2)
-		else | break
+		if type(a:2) == v:t_func
+			call a:2()
+		elseif type(a:2) == v:t_dict
+			call s:LibmodalEnterWithCombos(l:lower, a:2)
+		else
+			break
 		endif
 
 	catch
@@ -500,20 +517,22 @@ endfunction
 " * `a:2` => `modeCallback` OR `modeCommands`
 function! libmodal#Prompt(...) abort
 	" Define mode indicator
+	unlockvar l:indicator
 	let l:indicator = '* ' . a:1 . ' > '
 	lockvar l:indicator
 
 	" Name of variable used for input.
+	unlockvar l:input
 	let l:input = tolower(a:1) . "ModeInput"
 	lockvar l:input
 
+	unlockvar l:completions
 	if type(a:2) == v:t_dict
 		let l:completions = keys(a:2)
-		lockvar l:completions
 	elseif len(a:000) > 2
 		let l:completions = a:3
-		lockvar l:completions
 	endif
+	lockvar l:completions
 
 	" Outer loop to keep accepting commands
 	while 1 | try

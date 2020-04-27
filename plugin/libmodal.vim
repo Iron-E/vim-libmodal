@@ -4,7 +4,7 @@ endif
 let g:loaded_libmodal = 1
 
 if !exists('g:libmodalTimeouts')
-	let g:libmodalTimeouts = 0
+	let g:libmodalTimeouts = &timeout
 endif
 
 " ************************************************************

@@ -135,15 +135,15 @@ endfunction
 " SUMMARY:
 " * Underlying logic for entering a mode using pre-defined combos.
 " PARAMS:
-" * a:1 => `modeName` as `l:input`
+" * a:1 => tolower(`modeName`)
 " * a:2 => `modeCombos`
 " RETURNS:
 " * `0` => the calling function should break.
 " * `1` => the calling function should continue.
 function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
-	if exists('s:' . a:modeName . 'ModeTimeout')
-		call timer_stop(s:{a:modeName}ModeTimeout)
-		unlet s:{a:modeName}ModeTimeout
+	if exists('s:' . a:modeName . 'ModeTimer')
+		call timer_stop(s:{a:modeName}ModeTimer)
+		unlet s:{a:modeName}ModeTimer
 	endif
 
 	" Initialize variables necessary to execute combo modes.
@@ -172,9 +172,9 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		" The command is nowhere in the combo dict.
 		if l:command < 0
 			let l:clearInput = 1
-		" The command MAY be somewhere in the combo dict.
-		else
-			let s{a:modeName}ModeTimeout = timer_start(
+		" The command MAY be somewhere in the combo dict AND timeouts are enabled.
+		elseif s:True(s:{a:modeName}ModeTimeout)
+			let s{a:modeName}ModeTimer = timer_start(
 			\	&timeoutlen, {_ -> function('s:ClearLocalInput', [a:modeName])}
 			\)
 		endif
@@ -183,7 +183,9 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		let l:clearInput = 1
 	endif
 
-	if exists('l:clearInput') | call s:ClearLocalInput(a:modeName) | endif
+	if exists('l:clearInput')
+		call s:ClearLocalInput(a:modeName)
+	endif
 endfunction
 
 " SUMMARY:
@@ -334,138 +336,6 @@ endfunction
 " # | |_) | | | | '_ \| | |/ __|
 " # |  __/| |_| | |_) | | | (__
 " # |_|    \__,_|_.__/|_|_|\___|
-
-" SUMMARY:
-" * Runs the vim-libmodal command prompt loop. The function takes an optional
-"   argument specifying how many times to run (runs until exiting by default).
-" PARAMS:
-" * `a:1` => `modeName`
-" * `a:2` => `modeCallback` OR `modeCombos`
-" * `a:3` => `supressExit`
-" * `a:4` => `prompt`
-function! libmodal#Enter(...) abort
-	" Define mode indicator
-	let l:indicator = s:NewIndicator(a:1)
-
-	" Initialize the window state for the mode.
-	let l:winState = s:Init()
-
-	" Name of variable used for input.
-	let l:input = tolower(a:1) . "ModeInput"
-
-	" If the third argument, representing exit supression, has been passed.
-	if len(a:000) > 2 && s:True(a:3)
-		" Create the variable used to control the exit.
-		let l:exit = tolower(a:1) . "ModeExit"
-		let g:{l:exit} = 0
-	else | let l:exit = 0
-	endif
-
-	" Outer loop to keep accepting commands
-	while 1
-		try
-			" This check must be performed BEFORE `s:GetChar()`.
-			" If `supressExit` is on and `modeCallback` has registered the exit variable.
-			if !(s:Zero(l:exit) || s:Zero(g:{l:exit})) || s:InCmdWindow()
-				break
-			endif
-
-			" Print the indicator for the mode.
-			call s:Echo(l:indicator)
-			" Accept input
-			let g:{l:input} = s:GetChar()
-
-			" If `supressExit` is off and user inputs escape.
-			" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
-			if s:Zero(g:{l:input}) || (s:Zero(l:exit) && g:{l:input} ==# '')
-				break
-			endif
-
-			if type(a:2) == v:t_func | call a:2()
-			elseif type(a:2) == v:t_dict | call s:LibmodalEnterWithCombos(tolower(a:1), a:2)
-			else | break
-			endif
-
-		catch
-
-			call s:Beep()
-			let l:message = v:throwpoint . "\n" . v:exception
-			call s:ShowError(l:message)
-			break
-
-		endtry
-	endwhile
-	" Put the window back to the way it was before the mode enter.
-	call s:Restore(l:winState)
-	mode | echo ''
-	call garbagecollect()
-endfunction
-
-" SUMMARY:
-" * Runs the vim-libmodal command prompt loop. The function takes an optional
-"   argument specifying how many times to run (runs until exiting by default).
-" PARAMS:
-" * `a:1` => `modeName`
-" * `a:2` => `modeCallback` OR `modeCommands`
-function! libmodal#Prompt(...) abort
-	" Define mode indicator
-	let l:indicator = '* ' . a:1 . ' > '
-
-	" Name of variable used for input.
-	let l:input = tolower(a:1) . "ModeInput"
-
-	if type(a:2) == v:t_dict
-		let l:completions = keys(a:2)
-	elseif len(a:000) > 2
-		let l:completions = a:3
-	endif
-
-	" Outer loop to keep accepting commands
-	while 1 | try
-		" Redraw window
-		mode
-
-		" Make sure we are not in a command window
-		if s:InCmdWindow() | break | endif
-
-
-		" Prompt the user.
-		let g:{l:input} = ''
-
-		" Prompt the user and use completions from the command dictionary.
-		if exists('l:completions')
-			let s:completions = l:completions
-			let g:{l:input} = input(l:indicator, '', 'customlist,libmodal#complete')
-
-		" Prompt the user without completions if a callback is registered.
-		else | let g:{l:input} = input(l:indicator, '')
-		endif
-
-		" if a:2 is a function then call it.
-		if g:{l:input} != ''
-			if type(a:2) == v:t_func
-				call a:2()
-			elseif type(a:2) == v:t_dict
-				if has_key(a:2, g:{l:input}) | execute a:2[g:{l:input}]
-				else | call s:ShowError('Unknown command.')
-				endif
-			endif
-		else | break
-		endif
-
-	catch /^Vim:Interrupt$/ | break | catch
-
-		call s:Beep()
-		let l:message = v:throwpoint . "\n" . v:exception
-		call s:ShowError(l:message)
-		break
-
-	endtry | endwhile
-	" Put the window back to the way it was before the mode enter.
-	mode | echo ''
-	call garbagecollect()
-endfunction
-
 " SUMMARY:
 " Provide completions based on the current `s:completions`.
 " PARAMS:
@@ -494,3 +364,166 @@ function! libmodal#complete(...) abort
 	return l:completions
 endfunction
 
+" SUMMARY:
+" * Runs the vim-libmodal command prompt loop. The function takes an optional
+"   argument specifying how many times to run (runs until exiting by default).
+" PARAMS:
+" * `a:1` => `modeName`
+" * `a:2` => `modeCallback` OR `modeCombos`
+" * `a:3` => `supressExit`
+function! libmodal#Enter(...) abort
+	" Define mode indicator
+	let l:indicator = s:NewIndicator(a:1)
+	lockvar l:indicator
+
+	" Initialize the window state for the mode.
+	let l:winState = s:Init()
+	lockvar l:winState
+
+	" Convert the modename to lowercase.
+	let l:lower = tolower(a:1)
+	lockvar l:lower
+
+	" Name of variable used for input.
+	let l:input = l:lower . "ModeInput"
+	lockvar l:input
+
+	" If the third argument, representing exit supression, has been passed.
+	if len(a:000) > 2 && s:True(a:3)
+		" Create the variable used to control the exit.
+		let l:exit = l:lower . "ModeExit"
+		let g:{l:exit} = 0
+	else
+		let l:exit = 0
+	endif
+
+	lockvar l:exit
+
+	if type(a:2) == v:t_dict
+
+		if exists('g:' . l:lower . 'ModeTimeout')
+			let l:timeout = g:{l:lower}ModeTimeout
+		elseif exists('g:libmodalTimeouts')
+			let l:timeout = g:libmodalTimeouts
+		else
+			let l:timeout = 0
+		endif
+
+		let s:{l:lower}ModeTimeout = l:timeout
+		lockvar s:{l:lower}ModeTimeout
+
+	endif
+
+	" Outer loop to keep accepting commands
+	while 1 | try
+			" This check must be performed BEFORE `s:GetChar()`.
+		" If `supressExit` is on and `modeCallback` has registered the exit variable.
+		if !(s:Zero(l:exit) || s:Zero(g:{l:exit})) || s:InCmdWindow()
+			break
+		endif
+
+		" Print the indicator for the mode.
+		call s:Echo(l:indicator)
+		" Accept input
+		let g:{l:input} = s:GetChar()
+
+		" If `supressExit` is off and user inputs escape.
+		" This check must be performed AFTER `s:GetChar()` and BEFORE `call a:1()`.
+		if s:Zero(g:{l:input}) || (s:Zero(l:exit) && g:{l:input} ==# '')
+			break
+		endif
+
+		if type(a:2) == v:t_func | call a:2()
+		elseif type(a:2) == v:t_dict | call s:LibmodalEnterWithCombos(l:lower, a:2)
+		else | break
+		endif
+
+	catch
+
+		call s:Beep()
+		let l:message = v:throwpoint . "\n" . v:exception
+		call s:ShowError(l:message)
+		break
+
+	endtry | endwhile
+	" Put the window back to the way it was before the mode enter.
+	call s:Restore(l:winState)
+	mode | echo ''
+	call garbagecollect()
+endfunction
+
+" SUMMARY:
+" * Runs the vim-libmodal command prompt loop. The function takes an optional
+"   argument specifying how many times to run (runs until exiting by default).
+" PARAMS:
+" * `a:1` => `modeName`
+" * `a:2` => `modeCallback` OR `modeCommands`
+function! libmodal#Prompt(...) abort
+	" Define mode indicator
+	let l:indicator = '* ' . a:1 . ' > '
+	lockvar l:indicator
+
+	" Name of variable used for input.
+	let l:input = tolower(a:1) . "ModeInput"
+	lockvar l:input
+
+	if type(a:2) == v:t_dict
+		let l:completions = keys(a:2)
+		lockvar l:completions
+	elseif len(a:000) > 2
+		let l:completions = a:3
+		lockvar l:completions
+	endif
+
+	" Outer loop to keep accepting commands
+	while 1 | try
+		" Redraw window
+		mode
+
+		" Make sure we are not in a command window
+		if s:InCmdWindow() | break | endif
+
+
+		" Prompt the user.
+		let g:{l:input} = ''
+
+		" Prompt the user and use completions from the command dictionary.
+		if exists('l:completions')
+			unlockvar s:completions
+			let s:completions = l:completions
+			lockvar s:completions
+
+			let g:{l:input} = input(l:indicator, '', 'customlist,libmodal#complete')
+
+		" Prompt the user without completions if a callback is registered.
+		else
+			let g:{l:input} = input(l:indicator, '')
+		endif
+
+		" if a:2 is a function then call it.
+		if g:{l:input} != ''
+			if type(a:2) == v:t_func
+				call a:2()
+			elseif type(a:2) == v:t_dict
+				if has_key(a:2, g:{l:input})
+					execute a:2[g:{l:input}]
+				else
+					call s:ShowError('Unknown command.')
+				endif
+			endif
+		else
+			break
+		endif
+
+	catch /^Vim:Interrupt$/ | break | catch
+
+		call s:Beep()
+		let l:message = v:throwpoint . "\n" . v:exception
+		call s:ShowError(l:message)
+		break
+
+	endtry | endwhile
+	" Put the window back to the way it was before the mode enter.
+	mode | echo ''
+	call garbagecollect()
+endfunction

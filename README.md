@@ -114,6 +114,9 @@ let s:barModeCombos = {
 \}
 ```
 
+- NOTE: When defining actions that involve a chorded keypress (e.g. `CTRL-W_s`), mode creators should use `i_CTRL-V` to insert the literal of that character.
+	- For example, if a mode creator wants a mapping for `<C-s>v`, then it should be specified as `v`.
+
 And then to enter that mode, you can call:
 
 ```viml
@@ -128,6 +131,53 @@ This allows `libmodal` to quickly determine which mappings are and are not part 
 
 - Note that `libmodal#Enter` will only parse a `modeCombos` dict _once_ upon entrance.
 	- Changes to the mapping dictionary that may occur while in a mode _are not reflected_ until the mode is entered again and the dictionary is re-parsed.
+
+### Libmodal Timeouts
+
+When key combinations are being used, mode creators may also enable the use of Vim's built-in `timeout` feature. Unlike other options which are specified by passing arguments to `libmodal#Enter`, this feature is enabled through a variable.
+
+- Note that if two keybinds share a beginning, and one is shorter than the other, (e.g. `zf` and `zfo`), then the user must press <CR> to execute it.
+	- This also means that commands ending in `^M` are not permitted.
+	- Unfortunately, because of the limitations of Vimscript (more specifically `getchar()`) it is not possible to execute a function on |timeout| using |timers| exposed by the API. `getchar()` blocks execution and there is no combination of |sleep| or `wait()` that will allow `getchar()` to be called asynchronously
+	- If you are reading this and know how to do something like this without using a secondary language, please let me know or open a pull request.
+
+The reasoning for this is that the use of `timeout`s is primarily chosen by the user of a mode, rather than the creator (whereas other features like exit supression are largely creator-oriented).
+
+To enable `timeout`s, one may set the following variables:
+
+```viml
+" Set libmodal modes to turn timeouts on.
+let g:libmodalTimeouts = 1
+" Enable timeouts for specific mode.
+let g:{modeName}ModeTimeout = 1
+```
+
+Similarly, to disable them, one may set them to `0`.
+
+- Note that If not specified by the user, `g:libmodalTimeouts` automatically references the `timeout` on/off value.
+- Note that the `g:limbodalTimeouts` variable should NOT be defined by plugins.
+	- Allow users to decide whether or not they want timeouts to be enabled globally by themselves.
+- Note that mode-specific timeout variables will override `g:libmodalTimeouts`.
+	- This is so a default may be set but overridden.
+
+When enabled, `libmodal` will reference the mode user's `timeoutlen` as specified in their config. This way, modes will feel consistent to users by default.
+
+However, mode creators may change `timeoutlen` upon entrance of a mode, and then reset it upon exit. Example:
+
+```viml
+function! s:BarMode() abort
+	" Get the user's preferred timeout length.
+	let l:timeoutlen = &timeoutlen
+	" Set it to something else, like 1500ms
+	let &timeoutlen = 1500
+	" Enter a mode
+	call libmodal#Enter(…)
+	" Reset the timeout
+	let &timeoutlen = l:timeoutlen
+endfunction
+```
+
+Mode creators who use `modeCallback`s may define timeouts manually using `timers`, which is how `libmodal` implements them internally.
 
 ### Exit Supression
 

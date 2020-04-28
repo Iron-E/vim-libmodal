@@ -150,16 +150,12 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" Stop timers that would clear user input.
 	if exists('s:' . a:modeName . 'ModeTimer')
-		if timer_info(s:{a:modeName}ModeTimer) != []
-			echom 'Stopping timer.'
-		endif
 		call timer_stop(s:{a:modeName}ModeTimer)
 		unlet s:{a:modeName}ModeTimer
 	endif
 
 	" Append latest input to history.
 	let s:{a:modeName}ModeInput .= g:{a:modeName}ModeInput
-	echom 'CURRENT INPUT IS ' . s:{a:modeName}ModeInput
 
 	" Try to grab the command for the input.
 	let l:command = s:Get(s:{a:modeName}ModeCombos, s:{a:modeName}ModeInput)
@@ -417,9 +413,6 @@ function! libmodal#Enter(...) abort
 		let s:{l:lower}ModeTimeout = l:timeout
 		lockvar s:{l:lower}ModeTimeout
 
-		echom 'l:timeout >>> ' . string(s:{l:lower}ModeTimeout)
-		echom 's:' . l:lower . 'ModeTimeout >>> ' . string(s:{l:lower}ModeTimeout)
-
 		" Build a pseudo-parse-tree.
 		let s:{l:lower}ModeCombos = {}
 		for l:splitCombos in s:SplitArgDict(a:2)
@@ -427,8 +420,6 @@ function! libmodal#Enter(...) abort
 			\	s:{l:lower}ModeCombos, l:splitCombos, a:2[join(l:splitCombos, '')]
 			\)
 		endfor
-
-		echom 'COMBOS >>> ' . string(s:{l:lower}ModeCombos)
 
 		" Initialize the input history variable.
 		call s:ClearLocalInput(l:lower)

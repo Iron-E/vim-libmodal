@@ -4,5 +4,4 @@ let s:barModeCombos = {
 \	'zfc': 'tabnew'
 \}
 
-echom '.' | echom '.' | echom '.' | echom '.' | echom '.' | echom '.' | echom '.'
 call libmodal#Enter('BAR', s:barModeCombos)

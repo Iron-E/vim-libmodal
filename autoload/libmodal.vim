@@ -121,7 +121,6 @@ function! s:GetChar() abort
 			" Get the next character.
 			let l:modeInput = getchar()
 			" Break condition
-			" XXX: this might be broken, you won't know until you test older stuff.
 			if !(v:mouse_win < 1 && l:modeInput ==# "\<CursorHold>")
 				break
 			endif
@@ -156,8 +155,6 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 		endif
 		call timer_stop(s:{a:modeName}ModeTimer)
 		unlet s:{a:modeName}ModeTimer
-	else
-		echom "IT DOESN'T EXIST???????? >>>>>> s:" . a:modeName . "ModeTimer"
 	endif
 
 	" Append latest input to history.
@@ -170,50 +167,20 @@ function! s:LibmodalEnterWithCombos(modeName, modeCombos) abort
 
 	" The command is nowhere in the combo dict.
 	if l:typeof == v:t_number
-
 		let l:clearInput = 1
-
 	" The command MAY be somewhere in the combo dict.
-	elseif l:typeof == v:t_dict
-
-		" If timers are on.
-		if s:True(s:{a:modeName}ModeTimeout)
-
-			let l:ClearFunc = function('s:ClearLocalInput', [a:modeName])
-
-			" There is a command for this entry.
-			if has_key(l:command, s:EX_KEY)
-				" Get the command that was embedded into the '' key.
-				let l:command = l:command[s:EX_KEY]
-
-				" Start a timer to execute user input and then clear the input history.
-				echom 'Starting s:' . a:modeName .  'ModeTimer to execute command: ' . string(l:command)
-				let s:{a:modeName}ModeTimer = timer_start(
-				\	&timeoutlen, {
-				\		_ -> execute([l:command, 'call ' . l:ClearFunc])
-				\	}
-				\)
-
-			else
-
-				" Start a timer to clear the user's input.
-				echom 'Starting s:' . a:modeName .  'ModeTimer to clear input.'
-				let s:{a:modeName}ModeTimer = timer_start(
-				\	&timeoutlen, {_ -> execute(['echom "Timer ran out. clearning."', 'call ' . l:ClearFunc])}
-				\)
-			endif
-		endif
-
+	elseif l:typeof == v:t_dict && s:True(s:{a:modeName}ModeTimeout)
+		" Start a timer to clear the user's input.
+		let s:{a:modeName}ModeTimer = timer_start(
+		\	&timeoutlen, {_ -> call(function('s:ClearLocalInput'), [a:modeName])}
+		\)
 	else
-
 		execute l:command
 		let l:clearInput = 1
 	endif
 
 	if exists('l:clearInput')
-
 		call s:ClearLocalInput(a:modeName)
-
 	endif
 endfunction
 

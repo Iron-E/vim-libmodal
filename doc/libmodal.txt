@@ -21,7 +21,7 @@ Forked from |vim-win|:
 
 |libmodal| is a Neo/vim library/|plugin| aimed at simplifying the creation
 of new "modes" (e.g. |Insert|, |Normal|). The entrance of modes is
-creator-defined, and their exit defaults to |<Esc>|. The use and name of
+creator-defined, and their exit defaults to <Esc>. The use and name of
 modes is also creator-defined, and is outlined in |libmodal-usage|.
 
 See: |vim-modes|, |user-functions|, |user-commands|
@@ -158,6 +158,12 @@ Combo Action
 	\}
 <
 
+- NOTE: When defining actions that involve a chorded keypress (e.g. |CTRL-W_s|),
+        mode creators should use |i_CTRL-V| to insert the literal of that
+        character.
+        - For example, if a mode creator wants a mapping for `<C-s>v`, then it
+          should be specified as `v`.
+
 And then to enter that mode, you can call:
 
 >
@@ -196,6 +202,18 @@ When |libmodal-key-combinations| are being used, mode creators may also enable
 the use of Vim's built-in |timeout| feature. Unlike other options which are
 specified by passing arguments to |libmodal#Enter|, this feature is enabled
 through a |variable|.
+
+- NOTE: If two keybinds share a beginning, and one is shorter than the other,
+        (e.g. `zf` and `zfo`), then the user must press <CR> to execute it.
+		This also means that commands ending in `` are not permitted.
+        - Unfortunately, because of the limitations of Vimscript (more
+          specifically |getchar()|) it is not possible to execute a function
+          on |timeout| using |timers| exposed by the API. |getchar()| blocks
+          execution and there is no combination of |sleep| or |wait()| that
+          will allow |getchar()| to be called asynchronously
+        - If you are reading this and know how to do something like this
+          without using a secondary language, please let me know or open a
+          pull request.
 
 The reasoning for this is that the use of |timeout|s is primarily chosen by the
 user of a mode, rather than the creator (whereas other features like
@@ -246,7 +264,7 @@ Mode creators who use `modeCallback`s may define timeouts manually using
                                                   *libmodal-exit-supression*
 
 When the `supressExit` parameter is specified, |libmodal#Enter| will ignore
-`<Esc>` presses and instead listen for changes to a unique |variable| created
+<Esc> presses and instead listen for changes to a unique |variable| created
 for the specific purpose of exiting the mode. The |variable| is generated as
 follows:
 
@@ -314,7 +332,7 @@ Submodes ~
 |libmodal| has built-in support for entering additional modes while already in
 a |libmodal| mode. To enter another mode, one must only call |libmodal#Enter|
 (or |libmodal#Prompt|) from within a mode. Additionally, when a user presses
-`<Esc>` they will automatically be taken back to the mode that they were
+<Esc> they will automatically be taken back to the mode that they were
 previously inside of (unless |libmodal-exit-supression| is used).
 
 To test out this feature, one may run the following:

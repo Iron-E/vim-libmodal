@@ -138,7 +138,7 @@ When key combinations are being used, mode creators may also enable the use of V
 
 - Note that if two keybinds share a beginning, and one is shorter than the other, (e.g. `zf` and `zfo`), then the user must press <CR> to execute it.
 	- This also means that commands ending in `^M` are not permitted.
-	- Unfortunately, because of the limitations of Vimscript (more specifically `getchar()`) it is not possible to execute a function on |timeout| using |timers| exposed by the API. `getchar()` blocks execution and there is no combination of |sleep| or `wait()` that will allow `getchar()` to be called asynchronously
+	- Unfortunately, because of the limitations of Vimscript (more specifically `getchar()`) it is not possible to execute a function on `timeout` using `timers` exposed by the API. `getchar()` blocks execution and there is no combination of `sleep` or `wait()` that will allow `getchar()` to be called asynchronously
 	- If you are reading this and know how to do something like this without using a secondary language, please let me know or open a pull request.
 
 The reasoning for this is that the use of `timeout`s is primarily chosen by the user of a mode, rather than the creator (whereas other features like exit supression are largely creator-oriented).

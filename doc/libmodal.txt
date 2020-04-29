@@ -117,11 +117,11 @@ To define a new mode, you must first create a |user-function| to pass into
 <
 
 After defining said |user-function|, you can create a |mapping| to enter the
-mode. Be sure to use |map-<expr>|. Example:
+mode.
 
 >
 	command! FooModeEnter call libmodal#Enter('FOO', funcref('s:FooMode'))
-	nnoremap <expr> <leader>n FooModeEnter
+	nnoremap <leader>n :FooModeEnter
 <
 
 - NOTE: the |funcref()| call must be there or else |libmodal#Enter| won't

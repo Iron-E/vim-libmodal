@@ -83,11 +83,11 @@ function! s:FooMode()
 endfunction
 ```
 
-After defining said function, you can create a mapping to enter the mode. Be sure to use `<expr>`. Example:
+After defining said function, you can create a mapping to enter the mode. Example:
 
 ```viml
 command! FooModeEnter call libmodal#Enter('FOO', funcref('s:FooMode'))
-nnoremap <expr> <leader>n FooModeEnter
+nnoremap <leader>n :FooModeEnter
 ```
 
 - Note the `funcref()` call. __It must be there__ or else `libmodal#Enter` won't execute properly.

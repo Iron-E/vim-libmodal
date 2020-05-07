@@ -91,7 +91,7 @@ function! s:Get(comboDict, comboString) abort
 	" Make sure the dicitonary has a key for that value.
 	if has_key(a:comboDict, l:comboChar)
 		let l:val = a:comboDict[l:comboChar]
-		let l:valType = type()
+		let l:valType = type(l:val)
 
 		if l:valType == v:t_dict
 			if has_key(l:val, s:EX_KEY)

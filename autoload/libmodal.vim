@@ -94,7 +94,7 @@ function! s:Get(comboDict, comboString) abort
 		let l:valType = type(l:val)
 
 		if l:valType == v:t_dict
-			if has_key(l:val, s:EX_KEY)
+			if has_key(l:val, s:EX_KEY) && len(a:comboString) <= 1
 				return l:val
 			else
 				return s:Get(l:val, a:comboString[1:])

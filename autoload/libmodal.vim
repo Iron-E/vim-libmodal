@@ -90,18 +90,17 @@ function! s:Get(comboDict, comboString) abort
 
 	" Make sure the dicitonary has a key for that value.
 	if has_key(a:comboDict, l:comboChar)
-		let l:valType = type(a:comboDict[l:comboChar])
+		let l:val = a:comboDict[l:comboChar]
+		let l:valType = type()
 
 		if l:valType == v:t_dict
-			if has_key(a:comboDict, s:EX_KEY)
-				return a:comboDict
+			if has_key(l:val, s:EX_KEY)
+				return l:val
 			else
-				return s:Get(
-				\	a:comboDict[l:comboChar], a:comboString[1:]
-				\)
+				return s:Get(l:val, a:comboString[1:])
 			endif
 		elseif l:valType == v:t_string && len(a:comboString) <= 1
-			return a:comboDict[l:comboChar]
+			return l:val
 		endif
 	" The user input has run out, but there is more in the dictionary.
 	elseif a:comboString == ''

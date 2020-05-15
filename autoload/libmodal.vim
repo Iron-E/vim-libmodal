@@ -472,6 +472,7 @@ endfunction
 " PARAMS:
 " * `a:1` => `modeName`
 " * `a:2` => `modeCallback` OR `modeCommands`
+" * `a:3` => `modeCompletions`
 function! libmodal#Prompt(...) abort
 	" Define mode indicator
 	unlockvar l:indicator

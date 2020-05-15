@@ -19,3 +19,24 @@ tags
 # Persistent undo
 [._]*.un~
 test.vim
+
+# create by https://github.com/iamcco/coc-gitignore (Fri May 15 2020 17:57:16 GMT-0400 (Eastern Daylight Time))
+# Vim.gitignore:
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~

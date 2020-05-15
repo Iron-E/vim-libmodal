@@ -12,6 +12,8 @@ Forked from [`vim-win`](https://github.com/dstein64/vim-win):
 
 `libmodal` is a Neo/vim library/plugin aimed at simplifying the creation of new "modes" (e.g. Insert, Normal). The entrance of modes is user-defined, and their exit defaults to `<Esc>`. The function and name of modes is also user-defined, and is outlined in `libmodal-usage`.
 
+If you use Neovim, try [nvim-libmodal][libmodal] instead!
+
 # Installation
 
 Use the built-in package manager or one of the various package managers.
@@ -22,6 +24,10 @@ Use the built-in package manager or one of the various package managers.
 | NeoBundle | `NeoBundle 'https://github.com/Iron-E/vim-libmodal'`      |
 | Vim-Plug  | `Plug 'https://github.com/Iron-E/vim-libmodal'`           |
 | Vundle    | `Plugin 'https://github.com/Iron-E/vim-libmodal'`         |
+
+## Requirements
+
+* [nvim-libmodal][libmodal] is __not__ installed.
 
 # Usage
 
@@ -246,3 +252,5 @@ The following highlight groups can be configured to change a mode's colors:
 |:-----------------|:-------------|:------------------------------------|
 | `LibmodalPrompt` | `ModeMsg`    | Color for the mode text.            |
 | `LibmodalStar`   | `StatusLine` | Color for the `*` at the beginning. |
+
+[libmodal]: https://github.com/Iron-E/nvim-libmodal
